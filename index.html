@@ -64,11 +64,21 @@
             </select>
           </div>
           <div class="form-group">
-            <label for="ingredient-cost">Cost Per Unit <span class="required">*</span></label>
-            <div class="input-prefix">
-              <span>$</span>
-              <input type="number" id="ingredient-cost" placeholder="0.00" min="0" step="0.01" required />
+            <label for="ingredient-cost">
+              Cost Per Unit <span class="required">*</span>
+              <span id="price-source-badge" class="price-badge hidden">~ estimated</span>
+            </label>
+            <div class="cost-lookup-row">
+              <div class="input-prefix">
+                <span>$</span>
+                <input type="number" id="ingredient-cost" placeholder="0.00" min="0" step="0.01" required />
+              </div>
+              <button type="button" id="fetch-price-btn" class="btn btn-sm btn-outline price-lookup-btn" title="Look up average market price">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                Look up
+              </button>
             </div>
+            <span class="price-lookup-status" id="price-lookup-status"></span>
           </div>
         </div>
         <div class="modal-actions">
@@ -173,11 +183,21 @@
             </select>
           </div>
           <div class="form-group">
-            <label for="qi-cost">Cost Per Unit</label>
-            <div class="input-prefix">
-              <span>$</span>
-              <input type="number" id="qi-cost" placeholder="0.00" min="0" step="0.01" />
+            <label for="qi-cost">
+              Cost Per Unit
+              <span id="qi-price-source-badge" class="price-badge hidden">~ estimated</span>
+            </label>
+            <div class="cost-lookup-row">
+              <div class="input-prefix">
+                <span>$</span>
+                <input type="number" id="qi-cost" placeholder="0.00" min="0" step="0.01" />
+              </div>
+              <button type="button" id="qi-fetch-price-btn" class="btn btn-sm btn-outline price-lookup-btn" title="Look up average market price">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                Look up
+              </button>
             </div>
+            <span class="price-lookup-status" id="qi-price-lookup-status"></span>
           </div>
         </div>
         <div class="modal-actions">
@@ -987,6 +1007,27 @@
                   </div>
                 </div>
                 <button class="btn btn-primary" id="save-pricing-btn">Save Pricing Defaults</button>
+              </div>
+            </div>
+
+            <!-- Integrations -->
+            <div class="settings-section">
+              <h2 class="settings-section-title">Integrations</h2>
+              <div class="settings-card">
+                <div class="settings-row" style="align-items:flex-start;flex-direction:column;gap:0.75rem;">
+                  <div>
+                    <div class="settings-row-label">Spoonacular API Key</div>
+                    <div class="settings-row-hint">Used to fetch live average ingredient prices. Free tier: 150 lookups/day. <a href="https://spoonacular.com/food-api" target="_blank" rel="noopener" class="link">Get a free key →</a></div>
+                  </div>
+                  <div class="cost-lookup-row" style="width:100%;max-width:420px;">
+                    <input type="password" id="settings-spoonacular-key" placeholder="Enter your API key…" class="form-control" style="flex:1;" autocomplete="off" />
+                    <button type="button" id="toggle-key-visibility" class="btn btn-sm btn-outline" title="Show/hide key">
+                      <svg id="key-eye-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                    </button>
+                  </div>
+                  <p class="hint-text" id="spoonacular-key-hint" style="margin:0;"></p>
+                  <button class="btn btn-primary btn-sm" id="save-spoonacular-key-btn">Save Key</button>
+                </div>
               </div>
             </div>
 

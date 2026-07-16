@@ -66,6 +66,308 @@
     return 'Good ' + part + (name ? ', ' + name.split(' ')[0] : '') + '!';
   }
 
+  /* ═══════════════════════════════════════════════════════
+     1b. INGREDIENT PRICE LOOKUP & UNIT CONVERSION
+  ═══════════════════════════════════════════════════════ */
+
+  /**
+   * Curated average US retail prices for common baking ingredients.
+   * Each entry: { price (USD), unit (base unit for that price),
+   *   type: 'weight'|'volume'|'count',
+   *   density: grams per cup (enables volume↔weight conversion),
+   *   aliases: alternate name spellings }
+   */
+  const BAKING_PRICES = {
+    'flour':             { price: 0.053,  unit: 'oz',    type: 'weight',  density: 120,  aliases: ['all purpose flour','all-purpose flour','ap flour','bread flour','cake flour','white flour','self rising flour','self-rising flour'] },
+    'sugar':             { price: 0.063,  unit: 'oz',    type: 'weight',  density: 200,  aliases: ['granulated sugar','white sugar','cane sugar','table sugar'] },
+    'brown sugar':       { price: 0.075,  unit: 'oz',    type: 'weight',  density: 220,  aliases: ['light brown sugar','dark brown sugar','packed brown sugar'] },
+    'powdered sugar':    { price: 0.080,  unit: 'oz',    type: 'weight',  density: 120,  aliases: ['confectioners sugar','icing sugar','10x sugar','powdered sugar'] },
+    'butter':            { price: 0.313,  unit: 'oz',    type: 'weight',  density: 227,  aliases: ['unsalted butter','salted butter','sweet cream butter'] },
+    'eggs':              { price: 0.30,   unit: 'each',  type: 'count',                  aliases: ['egg','large egg','large eggs','medium egg','medium eggs','whole egg'] },
+    'milk':              { price: 0.055,  unit: 'fl oz', type: 'volume',                 aliases: ['whole milk','skim milk','2% milk','1% milk','dairy milk'] },
+    'heavy cream':       { price: 0.120,  unit: 'fl oz', type: 'volume',                 aliases: ['heavy whipping cream','whipping cream','double cream'] },
+    'half and half':     { price: 0.065,  unit: 'fl oz', type: 'volume',                 aliases: ['half & half','light cream'] },
+    'buttermilk':        { price: 0.065,  unit: 'fl oz', type: 'volume',                 aliases: [] },
+    'sour cream':        { price: 0.125,  unit: 'oz',    type: 'weight',                 aliases: [] },
+    'cream cheese':      { price: 0.156,  unit: 'oz',    type: 'weight',                 aliases: ['full fat cream cheese','philadelphia cream cheese'] },
+    'vanilla extract':   { price: 0.35,   unit: 'tsp',   type: 'volume',                 aliases: ['vanilla','pure vanilla','vanilla essence','imitation vanilla'] },
+    'baking powder':     { price: 0.040,  unit: 'tsp',   type: 'volume',  density: 4.6,  aliases: ['double acting baking powder'] },
+    'baking soda':       { price: 0.020,  unit: 'tsp',   type: 'volume',  density: 6,    aliases: ['sodium bicarbonate','bicarbonate of soda','bicarb'] },
+    'salt':              { price: 0.010,  unit: 'tsp',   type: 'volume',  density: 6,    aliases: ['table salt','kosher salt','sea salt','fine salt','iodized salt'] },
+    'cocoa powder':      { price: 0.10,   unit: 'tbsp',  type: 'volume',  density: 85,   aliases: ['unsweetened cocoa','dark cocoa','dutch process cocoa','cocoa','cacao powder'] },
+    'chocolate chips':   { price: 0.281,  unit: 'oz',    type: 'weight',  density: 160,  aliases: ['semi-sweet chocolate chips','dark chocolate chips','milk chocolate chips','white chocolate chips','mini chocolate chips'] },
+    'vegetable oil':     { price: 0.050,  unit: 'fl oz', type: 'volume',                 aliases: ['canola oil','cooking oil','neutral oil','sunflower oil'] },
+    'olive oil':         { price: 0.120,  unit: 'fl oz', type: 'volume',                 aliases: ['extra virgin olive oil','evoo','light olive oil'] },
+    'shortening':        { price: 0.080,  unit: 'tbsp',  type: 'volume',  density: 205,  aliases: ['vegetable shortening','crisco'] },
+    'honey':             { price: 0.15,   unit: 'tbsp',  type: 'volume',                 aliases: ['raw honey','pure honey','clover honey'] },
+    'maple syrup':       { price: 0.20,   unit: 'tbsp',  type: 'volume',                 aliases: ['pure maple syrup','maple extract'] },
+    'corn syrup':        { price: 0.09,   unit: 'tbsp',  type: 'volume',                 aliases: ['light corn syrup','dark corn syrup','karo'] },
+    'cream of tartar':   { price: 0.08,   unit: 'tsp',   type: 'volume',                 aliases: ['potassium bitartrate'] },
+    'yeast':             { price: 0.15,   unit: 'tsp',   type: 'volume',                 aliases: ['active dry yeast','instant yeast','dry yeast','bread yeast','rapid rise yeast'] },
+    'corn starch':       { price: 0.040,  unit: 'tbsp',  type: 'volume',  density: 128,  aliases: ['cornstarch','corn flour'] },
+    'almond flour':      { price: 0.45,   unit: 'oz',    type: 'weight',  density: 96,   aliases: ['almond meal','ground almonds','blanched almond flour'] },
+    'coconut flour':     { price: 0.25,   unit: 'oz',    type: 'weight',  density: 112,  aliases: [] },
+    'oats':              { price: 0.080,  unit: 'oz',    type: 'weight',  density: 90,   aliases: ['rolled oats','old fashioned oats','quick oats','oat flakes','instant oats'] },
+    'peanut butter':     { price: 0.12,   unit: 'tbsp',  type: 'volume',  density: 270,  aliases: ['natural peanut butter','smooth peanut butter','creamy peanut butter','chunky peanut butter'] },
+    'nutmeg':            { price: 0.050,  unit: 'tsp',   type: 'volume',                 aliases: ['ground nutmeg','whole nutmeg'] },
+    'cinnamon':          { price: 0.040,  unit: 'tsp',   type: 'volume',                 aliases: ['ground cinnamon','cinnamon powder'] },
+    'ginger':            { price: 0.035,  unit: 'tsp',   type: 'volume',                 aliases: ['ground ginger','powdered ginger'] },
+    'cloves':            { price: 0.060,  unit: 'tsp',   type: 'volume',                 aliases: ['ground cloves'] },
+    'cardamom':          { price: 0.070,  unit: 'tsp',   type: 'volume',                 aliases: ['ground cardamom'] },
+    'lemon':             { price: 0.75,   unit: 'each',  type: 'count',                  aliases: ['fresh lemon'] },
+    'orange':            { price: 0.90,   unit: 'each',  type: 'count',                  aliases: ['fresh orange'] },
+    'jam':               { price: 0.15,   unit: 'tbsp',  type: 'volume',                 aliases: ['strawberry jam','raspberry jam','apricot jam','preserve','jelly'] },
+    'condensed milk':    { price: 0.65,   unit: 'fl oz', type: 'volume',                 aliases: ['sweetened condensed milk'] },
+    'evaporated milk':   { price: 0.08,   unit: 'fl oz', type: 'volume',                 aliases: [] },
+    'gelatin':           { price: 0.20,   unit: 'each',  type: 'count',                  aliases: ['gelatin sheet','gelatin leaf','gelatin packet','unflavored gelatin'] },
+    'marzipan':          { price: 0.50,   unit: 'oz',    type: 'weight',                 aliases: ['almond paste'] },
+    'fondant':           { price: 0.40,   unit: 'oz',    type: 'weight',                 aliases: ['rolled fondant','sugar paste','gum paste'] },
+    'food coloring':     { price: 0.25,   unit: 'each',  type: 'count',                  aliases: ['food dye','gel food coloring','liquid food coloring'] },
+    'sprinkles':         { price: 0.50,   unit: 'oz',    type: 'weight',                 aliases: ['rainbow sprinkles','jimmies','confetti sprinkles','nonpareils'] },
+    'piping bag':        { price: 0.30,   unit: 'each',  type: 'count',                  aliases: ['pastry bag','disposable piping bag'] },
+    'cake board':        { price: 1.50,   unit: 'each',  type: 'count',                  aliases: ['cake drum','cake base','cardboard cake board'] },
+    'cake box':          { price: 2.00,   unit: 'each',  type: 'count',                  aliases: ['bakery box','cake container','pastry box'] },
+    'cupcake liner':     { price: 0.05,   unit: 'each',  type: 'count',                  aliases: ['cupcake wrapper','muffin liner','baking cup','cupcake cup'] },
+    'sticker':           { price: 0.10,   unit: 'each',  type: 'count',                  aliases: ['label','branded sticker','logo sticker','address label'] },
+    'parchment paper':   { price: 0.08,   unit: 'each',  type: 'count',                  aliases: ['baking paper','greaseproof paper','wax paper'] },
+  };
+
+  /** Unit type + conversion to base (grams for weight, ml for volume, count for count) */
+  const UNIT_TYPE_MAP = {
+    g: 'weight', kg: 'weight', oz: 'weight', lb: 'weight',
+    ml: 'volume', L: 'volume', tsp: 'volume', tbsp: 'volume', 'fl oz': 'volume', cup: 'volume',
+    each: 'count', dozen: 'count',
+  };
+
+  const UNIT_TO_BASE = {
+    // weight → grams
+    g: 1, kg: 1000, oz: 28.3495, lb: 453.592,
+    // volume → ml
+    ml: 1, L: 1000, tsp: 4.92892, tbsp: 14.7868, 'fl oz': 29.5735, cup: 236.588,
+    // count → count
+    each: 1, dozen: 12,
+  };
+
+  /** Map our unit labels to what Spoonacular accepts */
+  const UNIT_TO_SPOON = {
+    g: 'grams', kg: 'kilograms', oz: 'ounces', lb: 'pounds',
+    ml: 'milliliters', L: 'liters', tsp: 'teaspoon', tbsp: 'tablespoon',
+    'fl oz': 'fluid ounce', cup: 'cups', each: 'piece', dozen: 'dozen',
+  };
+
+  /**
+   * Find a matching entry in BAKING_PRICES for the given ingredient name.
+   * Returns the entry key or null.
+   */
+  function findPriceEntry(name) {
+    const n = name.toLowerCase().trim();
+    // Direct key match
+    if (BAKING_PRICES[n]) return n;
+    // Alias match
+    for (const [key, entry] of Object.entries(BAKING_PRICES)) {
+      if (key === n) return key;
+      if (entry.aliases && entry.aliases.some(a => n.includes(a) || a.includes(n))) return key;
+    }
+    // Partial key match (e.g. "flour" matches "all purpose flour")
+    for (const key of Object.keys(BAKING_PRICES)) {
+      if (n.includes(key) || key.includes(n)) return key;
+    }
+    return null;
+  }
+
+  /**
+   * Convert a price-per-unit from one unit to another.
+   * Returns the converted price, or null if the conversion is impossible
+   * (e.g. count ↔ weight without density).
+   */
+  function convertPrice(pricePerFromUnit, fromUnit, toUnit, ingredientName) {
+    if (fromUnit === toUnit) return pricePerFromUnit;
+
+    const fromType = UNIT_TYPE_MAP[fromUnit];
+    const toType   = UNIT_TYPE_MAP[toUnit];
+
+    // Same measurement type: simple ratio
+    if (fromType === toType) {
+      const fromBase = UNIT_TO_BASE[fromUnit]; // e.g. grams per oz
+      const toBase   = UNIT_TO_BASE[toUnit];   // e.g. grams per lb
+      return pricePerFromUnit * (fromBase / toBase);
+    }
+
+    // Cross-type weight ↔ volume: need ingredient density (g per cup)
+    if (
+      (fromType === 'weight' || fromType === 'volume') &&
+      (toType   === 'weight' || toType   === 'volume')
+    ) {
+      const key = ingredientName ? findPriceEntry(ingredientName) : null;
+      const density = key ? BAKING_PRICES[key].density : null; // g per cup
+      if (!density) return null; // can't convert without density
+
+      const gPerMl = density / UNIT_TO_BASE.cup; // g per ml
+
+      if (fromType === 'weight' && toType === 'volume') {
+        const pricePerG  = pricePerFromUnit / UNIT_TO_BASE[fromUnit];
+        const pricePerMl = pricePerG / gPerMl;
+        return pricePerMl * UNIT_TO_BASE[toUnit];
+      } else {
+        const pricePerMl = pricePerFromUnit / UNIT_TO_BASE[fromUnit];
+        const pricePerG  = pricePerMl * gPerMl;
+        return pricePerG * UNIT_TO_BASE[toUnit];
+      }
+    }
+
+    return null; // count ↔ weight/volume — not convertible
+  }
+
+  /**
+   * Look up average market price for an ingredient at a given unit.
+   * Tries Spoonacular API first (if key provided), falls back to local table.
+   * Returns { price: number, unit: string, source: 'spoonacular'|'local' } or null.
+   */
+  async function lookupIngredientPrice(name, targetUnit, apiKey) {
+    // ── Try Spoonacular first ──────────────────────────────
+    if (apiKey && apiKey.trim()) {
+      try {
+        const spoonUnit = UNIT_TO_SPOON[targetUnit] || targetUnit;
+        const searchUrl = `https://api.spoonacular.com/food/ingredients/search?query=${encodeURIComponent(name)}&number=1&apiKey=${encodeURIComponent(apiKey.trim())}`;
+        const searchRes = await fetch(searchUrl);
+        if (searchRes.ok) {
+          const { results } = await searchRes.json();
+          if (results && results.length) {
+            const id = results[0].id;
+            const infoUrl = `https://api.spoonacular.com/food/ingredients/${id}/information?amount=1&unit=${encodeURIComponent(spoonUnit)}&apiKey=${encodeURIComponent(apiKey.trim())}`;
+            const infoRes = await fetch(infoUrl);
+            if (infoRes.ok) {
+              const info = await infoRes.json();
+              if (info.estimatedCost && info.estimatedCost.value > 0) {
+                return {
+                  price: info.estimatedCost.value / 100, // US cents → dollars
+                  unit: targetUnit,
+                  source: 'spoonacular',
+                };
+              }
+            }
+          }
+        }
+      } catch (_) { /* network error — fall through to local table */ }
+    }
+
+    // ── Fallback: local curated table ─────────────────────
+    const key = findPriceEntry(name);
+    if (!key) return null;
+
+    const entry = BAKING_PRICES[key];
+    const basePrice = entry.price;
+    const baseUnit  = entry.unit;
+
+    // Convert from the table's base unit to the user's chosen unit
+    const converted = convertPrice(basePrice, baseUnit, targetUnit, name);
+    if (converted === null) {
+      // Incompatible units — return the table's native unit/price instead
+      return { price: basePrice, unit: baseUnit, source: 'local', unitMismatch: true };
+    }
+
+    return { price: converted, unit: targetUnit, source: 'local' };
+  }
+
+  /* ── Price lookup UI state (per-modal) ─────────────────── */
+  // Stores the "base" price+unit when a price was auto-fetched,
+  // so unit changes can re-convert without re-fetching.
+  const PriceLookupState = {
+    main: { fetchedPrice: null, fetchedUnit: null, fetchedName: null },
+    qi:   { fetchedPrice: null, fetchedUnit: null, fetchedName: null },
+  };
+
+  /**
+   * Shared helper: trigger a price lookup for a modal.
+   * @param {'main'|'qi'} which  - which modal
+   */
+  async function triggerPriceLookup(which) {
+    const nameEl   = document.getElementById(which === 'main' ? 'ingredient-name'         : 'qi-name');
+    const unitEl   = document.getElementById(which === 'main' ? 'ingredient-unit'         : 'qi-unit');
+    const costEl   = document.getElementById(which === 'main' ? 'ingredient-cost'         : 'qi-cost');
+    const badgeEl  = document.getElementById(which === 'main' ? 'price-source-badge'      : 'qi-price-source-badge');
+    const statusEl = document.getElementById(which === 'main' ? 'price-lookup-status'     : 'qi-price-lookup-status');
+    const btnEl    = document.getElementById(which === 'main' ? 'fetch-price-btn'         : 'qi-fetch-price-btn');
+
+    const name = nameEl.value.trim();
+    const unit = unitEl.value;
+
+    if (!name) {
+      statusEl.textContent = 'Enter an ingredient name first.';
+      statusEl.className = 'price-lookup-status error';
+      return;
+    }
+
+    btnEl.disabled = true;
+    btnEl.textContent = 'Looking up…';
+    statusEl.textContent = '';
+    badgeEl.classList.add('hidden');
+
+    const apiKey = DB.getSettings(State.profileId).spoonacularKey || '';
+    const result = await lookupIngredientPrice(name, unit, apiKey);
+
+    btnEl.disabled = false;
+    btnEl.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg> Look up';
+
+    if (!result) {
+      statusEl.textContent = 'No price data found. You can enter it manually.';
+      statusEl.className = 'price-lookup-status warn';
+      return;
+    }
+
+    const state = PriceLookupState[which];
+    state.fetchedName = name;
+
+    if (result.unitMismatch) {
+      // Show the price in the table's native unit and change the unit selector
+      costEl.value = result.price.toFixed(4).replace(/\.?0+$/, '').replace(/(\.\d{2})\d+/, '$1');
+      unitEl.value = result.unit;
+      state.fetchedPrice = result.price;
+      state.fetchedUnit  = result.unit;
+      statusEl.textContent = `No direct conversion — showing price per ${result.unit} instead.`;
+      statusEl.className = 'price-lookup-status warn';
+    } else {
+      costEl.value = result.price.toFixed(4).replace(/\.?0+$/, '').replace(/(\.\d{2})\d+/, '$1');
+      state.fetchedPrice = result.price;
+      state.fetchedUnit  = unit;
+      const src = result.source === 'spoonacular' ? 'Spoonacular market data' : 'US avg. retail';
+      statusEl.textContent = `Source: ${src}`;
+      statusEl.className = 'price-lookup-status ok';
+    }
+
+    badgeEl.classList.remove('hidden');
+  }
+
+  /**
+   * When the user changes the unit selector after a price was auto-fetched,
+   * re-convert the stored base price to the new unit.
+   */
+  function onUnitChange(which) {
+    const state = PriceLookupState[which];
+    if (!state.fetchedPrice) return; // user manually entered — don't override
+
+    const unitEl   = document.getElementById(which === 'main' ? 'ingredient-unit'     : 'qi-unit');
+    const costEl   = document.getElementById(which === 'main' ? 'ingredient-cost'     : 'qi-cost');
+    const statusEl = document.getElementById(which === 'main' ? 'price-lookup-status' : 'qi-price-lookup-status');
+    const badgeEl  = document.getElementById(which === 'main' ? 'price-source-badge'  : 'qi-price-source-badge');
+
+    const newUnit = unitEl.value;
+    const converted = convertPrice(state.fetchedPrice, state.fetchedUnit, newUnit, state.fetchedName);
+
+    if (converted === null) {
+      statusEl.textContent = `Can't auto-convert ${state.fetchedUnit} → ${newUnit} for this ingredient. Enter price manually.`;
+      statusEl.className = 'price-lookup-status warn';
+      badgeEl.classList.add('hidden');
+      costEl.value = '';
+      state.fetchedPrice = null; // clear so manual entry isn't overridden
+    } else {
+      costEl.value = converted.toFixed(4).replace(/\.?0+$/, '').replace(/(\.\d{2})\d+/, '$1');
+      state.fetchedPrice = converted;
+      state.fetchedUnit  = newUnit;
+      statusEl.className = 'price-lookup-status ok';
+    }
+  }
+
   /** Escape HTML to prevent injection */
   function esc(str) {
     const d = document.createElement('div');
@@ -113,6 +415,7 @@
     defaultMarkup: 20,
     defaultTax: 0,
     defaultUnits: 'imperial',
+    spoonacularKey: '',
     timeCategories: [
       { id: uuid(), name: 'Single Layer Cake',  estimatedMinutes: 120 },
       { id: uuid(), name: 'Double Layer Cake',  estimatedMinutes: 210 },
@@ -680,6 +983,13 @@
     form.reset();
     document.getElementById('ingredient-id').value = '';
 
+    // Reset price lookup state for this modal
+    PriceLookupState.main = { fetchedPrice: null, fetchedUnit: null, fetchedName: null };
+    const badgeEl  = document.getElementById('price-source-badge');
+    const statusEl = document.getElementById('price-lookup-status');
+    if (badgeEl)  badgeEl.classList.add('hidden');
+    if (statusEl) { statusEl.textContent = ''; statusEl.className = 'price-lookup-status'; }
+
     if (ingredientId) {
       const ingredients = DB.getIngredients(State.profileId);
       const ing = ingredients.find(i => i.id === ingredientId);
@@ -703,6 +1013,14 @@
     document.getElementById('add-ingredient-btn').addEventListener('click', () => openIngredientModal());
     document.getElementById('add-ingredient-empty-btn').addEventListener('click', () => openIngredientModal());
     document.getElementById('ingredient-search').addEventListener('input', renderIngredients);
+
+    // Price lookup buttons
+    document.getElementById('fetch-price-btn').addEventListener('click', () => triggerPriceLookup('main'));
+    document.getElementById('ingredient-unit').addEventListener('change', () => onUnitChange('main'));
+    // Clear fetched state when user manually edits the cost field
+    document.getElementById('ingredient-cost').addEventListener('input', () => {
+      PriceLookupState.main.fetchedPrice = null;
+    });
 
     document.getElementById('ingredient-form').addEventListener('submit', async e => {
       e.preventDefault();
@@ -1216,7 +1534,20 @@
     // Quick add ingredient button
     document.getElementById('quick-add-ingredient-btn').addEventListener('click', () => {
       document.getElementById('quick-ingredient-modal-overlay').classList.remove('hidden');
+      // Reset qi price lookup state
+      PriceLookupState.qi = { fetchedPrice: null, fetchedUnit: null, fetchedName: null };
+      const b = document.getElementById('qi-price-source-badge');
+      const s = document.getElementById('qi-price-lookup-status');
+      if (b) b.classList.add('hidden');
+      if (s) { s.textContent = ''; s.className = 'price-lookup-status'; }
       document.getElementById('qi-name').focus();
+    });
+
+    // Quick-add price lookup
+    document.getElementById('qi-fetch-price-btn').addEventListener('click', () => triggerPriceLookup('qi'));
+    document.getElementById('qi-unit').addEventListener('change', () => onUnitChange('qi'));
+    document.getElementById('qi-cost').addEventListener('input', () => {
+      PriceLookupState.qi.fetchedPrice = null;
     });
 
     // Quick ingredient form submit
@@ -1848,6 +2179,14 @@
     document.getElementById('units-imperial-btn').classList.toggle('active', settings.defaultUnits === 'imperial');
     document.getElementById('units-metric-btn').classList.toggle('active', settings.defaultUnits === 'metric');
 
+    // Spoonacular API key
+    const keyEl = document.getElementById('settings-spoonacular-key');
+    if (keyEl) {
+      keyEl.value = settings.spoonacularKey || '';
+      const hint = document.getElementById('spoonacular-key-hint');
+      if (hint) hint.textContent = settings.spoonacularKey ? 'Key saved. Price lookups will use live Spoonacular data.' : '';
+    }
+
     // Time categories
     renderTimeCategories(settings.timeCategories || []);
   }
@@ -1943,6 +2282,24 @@
     // Theme toggle
     document.getElementById('theme-toggle-input').addEventListener('change', () => {
       toggleTheme();
+    });
+
+    // Spoonacular API key save
+    document.getElementById('save-spoonacular-key-btn').addEventListener('click', () => {
+      const key = document.getElementById('settings-spoonacular-key').value.trim();
+      const settings = DB.getSettings(State.profileId);
+      settings.spoonacularKey = key;
+      DB.saveSettings(State.profileId, settings);
+      State.settings = settings;
+      const hint = document.getElementById('spoonacular-key-hint');
+      if (hint) hint.textContent = key ? 'Key saved. Price lookups will use live Spoonacular data.' : 'Key cleared. Lookups will use built-in price table.';
+      showToast(key ? 'API key saved!' : 'API key cleared.', 'success');
+    });
+
+    // Show/hide key toggle
+    document.getElementById('toggle-key-visibility').addEventListener('click', () => {
+      const input = document.getElementById('settings-spoonacular-key');
+      input.type = input.type === 'password' ? 'text' : 'password';
     });
 
     // Pricing save
