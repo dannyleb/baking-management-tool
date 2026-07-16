@@ -2456,6 +2456,13 @@ p  { color: var(--text-2); }
 }
 
 /* ─── 20. RESPONSIVE / MOBILE ───────────────────────────── */
+
+/* Mobile header: hidden by default, only shown on true mobile */
+.mobile-header {
+  display: none;
+}
+
+/* ── Tier 1: Large tablet layout adjustments (≤1024px) ── */
 @media (max-width: 1024px) {
   .stats-row {
     grid-template-columns: repeat(2, 1fr);
@@ -2466,39 +2473,44 @@ p  { color: var(--text-2); }
   }
 }
 
-@media (max-width: 768px) {
-  :root {
-    --sidebar-width: 100%;
-  }
-
-  #app-shell {
-    position: relative;
-  }
-
+/* ── Tier 2: Tablet (≤900px) — auto-collapse sidebar, no mobile header ── */
+@media (max-width: 900px) {
+  /* Force sidebar into icon-only collapsed mode — no JS needed */
   .sidebar {
-    position: fixed;
-    top: 0;
-    left: 0;
-    height: 100vh;
-    z-index: 200;
-    transform: translateX(-100%);
-    transition: transform var(--transition-slow);
-    width: 240px;
-    min-width: 240px;
+    width: var(--sidebar-collapsed);
+    min-width: var(--sidebar-collapsed);
+    overflow: hidden;
   }
 
-  .sidebar.mobile-open {
-    transform: translateX(0);
+  /* Hide text labels in collapsed sidebar */
+  .sidebar .logo-text,
+  .sidebar .sidebar-profile-info,
+  .sidebar .nav-link span,
+  .sidebar .btn-link span {
+    opacity: 0;
+    pointer-events: none;
+    width: 0;
+    overflow: hidden;
+    white-space: nowrap;
   }
 
-  .sidebar-overlay {
-    display: block;
+  .sidebar .sidebar-logo {
+    justify-content: center;
   }
 
+  /* Hide the collapse toggle — sidebar is auto-collapsed at this width */
+  .sidebar-toggle {
+    display: none;
+  }
+
+  /* Ensure main content fills the remaining space */
   .main-content {
-    width: 100%;
+    min-width: 0;
   }
+}
 
+/* ── Tier 3: Content layout adjustments (≤768px) ── */
+@media (max-width: 768px) {
   .view-section {
     padding: 1rem;
   }
@@ -2561,7 +2573,56 @@ p  { color: var(--text-2); }
     padding: 1.25rem;
   }
 
-  /* Mobile header bar */
+  .recipe-card-actions {
+    flex-wrap: wrap;
+  }
+}
+
+/* ── Tier 4: Mobile (≤600px) — sidebar drawer + mobile header ── */
+@media (max-width: 600px) {
+  /* Override tablet auto-collapse: sidebar becomes a slide-in drawer */
+  .sidebar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    height: 100vh;
+    z-index: 200;
+    width: 240px;
+    min-width: 240px;
+    overflow: visible;
+    transform: translateX(-100%);
+    transition: transform var(--transition-slow);
+  }
+
+  /* Restore all text labels inside the drawer */
+  .sidebar .logo-text,
+  .sidebar .sidebar-profile-info,
+  .sidebar .nav-link span,
+  .sidebar .btn-link span {
+    opacity: 1;
+    pointer-events: auto;
+    width: auto;
+    overflow: visible;
+    white-space: normal;
+  }
+
+  .sidebar .sidebar-logo {
+    justify-content: flex-start;
+  }
+
+  .sidebar.mobile-open {
+    transform: translateX(0);
+  }
+
+  .sidebar-overlay {
+    display: block;
+  }
+
+  /* Show mobile header bar */
+  .main-content {
+    width: 100%;
+  }
+
   .main-content::before {
     content: '';
     display: block;
@@ -2609,10 +2670,6 @@ p  { color: var(--text-2); }
     gap: 0.4rem;
     font-weight: 700;
     font-size: 1rem;
-  }
-
-  .recipe-card-actions {
-    flex-wrap: wrap;
   }
 }
 
