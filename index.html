@@ -316,6 +316,10 @@
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12,6 12,12 16,14"/></svg>
             <span>Job History</span>
           </a>
+          <a href="#" class="nav-link" data-view="help">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17" stroke-linecap="round" stroke-width="3"/></svg>
+            <span>How to Use</span>
+          </a>
           <a href="#" class="nav-link" data-view="settings">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
             <span>Settings</span>
@@ -1062,6 +1066,208 @@
             </div>
 
           </div>
+        </section>
+
+        <!-- ── HOW TO USE VIEW ────────────────────── -->
+        <section id="view-help" class="view-section hidden">
+          <div class="view-header">
+            <div>
+              <h1>How to Use BakerOS</h1>
+              <p class="view-subtitle">A quick reference guide for every feature</p>
+            </div>
+          </div>
+
+          <div class="help-grid">
+
+            <!-- Getting Started -->
+            <div class="help-card" data-help-section="getting-started">
+              <button class="help-card-header" aria-expanded="true">
+                <div class="help-card-title">
+                  <span class="help-icon">🚀</span>
+                  <span>Getting Started</span>
+                </div>
+                <svg class="help-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6,9 12,15 18,9"/></svg>
+              </button>
+              <div class="help-card-body">
+                <ol class="help-steps">
+                  <li>When you first open BakerOS, you'll be prompted to create a <strong>Bakery Profile</strong> — enter your bakery name and your name, and optionally upload a profile photo.</li>
+                  <li>Once created, you'll land on the <strong>Dashboard</strong> every time you return.</li>
+                  <li>Need multiple profiles (e.g. personal vs. commercial)? Click <strong>Switch Profile</strong> at the bottom of the sidebar to add or switch between bakeries.</li>
+                </ol>
+              </div>
+            </div>
+
+            <!-- Ingredients -->
+            <div class="help-card" data-help-section="ingredients">
+              <button class="help-card-header" aria-expanded="false">
+                <div class="help-card-title">
+                  <span class="help-icon">📦</span>
+                  <span>Managing Ingredients</span>
+                </div>
+                <svg class="help-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6,9 12,15 18,9"/></svg>
+              </button>
+              <div class="help-card-body hidden">
+                <ol class="help-steps">
+                  <li>Go to <strong>Ingredients</strong> in the sidebar and click <strong>+ Add Ingredient</strong>.</li>
+                  <li>Enter the ingredient name, choose its default unit (g, oz, cup, each, etc.), and set a cost per unit.</li>
+                  <li><strong>Look up price</strong> — click the search button next to the cost field to auto-fill the average US retail price from our built-in table of 55+ baking ingredients (flour, butter, eggs, chocolate chips, cake boxes, and more).</li>
+                  <li>For live market prices, add a free <strong>Spoonacular API key</strong> in Settings → Integrations. The app will query current market data before falling back to the built-in table.</li>
+                  <li>When you change the unit dropdown after a price is auto-filled, the cost <strong>recalculates automatically</strong> — including cross-type conversions (e.g. lb → cup) using each ingredient's density.</li>
+                  <li>Use the <strong>search bar</strong> at the top to filter your ingredient list as it grows.</li>
+                </ol>
+                <div class="help-tip">
+                  <strong>Tip:</strong> You can also add ingredients on-the-fly while building a recipe — use the <strong>+ Add to Library</strong> button inside the Recipe Builder.
+                </div>
+              </div>
+            </div>
+
+            <!-- Saved Recipes -->
+            <div class="help-card" data-help-section="recipes">
+              <button class="help-card-header" aria-expanded="false">
+                <div class="help-card-title">
+                  <span class="help-icon">🔖</span>
+                  <span>Saved Recipes (Repeat Items)</span>
+                </div>
+                <svg class="help-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6,9 12,15 18,9"/></svg>
+              </button>
+              <div class="help-card-body hidden">
+                <p class="help-intro">Saved Recipes are pre-built items you sell repeatedly — a dozen cupcakes, a double-layer cake, a birthday cake pop set. Build them once, reuse them forever.</p>
+                <ol class="help-steps">
+                  <li>Go to <strong>Saved Recipes</strong> → <strong>Create Repeat Item</strong>.</li>
+                  <li>Enter a recipe name, choose a <strong>category</strong> (Single Layer Cake, 12 Cupcakes, etc.), and add an optional description.</li>
+                  <li>Upload up to <strong>5 photos</strong> of the finished product by clicking or dragging into the photo area.</li>
+                  <li><strong>Add ingredients</strong> by dragging them from the left panel into the recipe area. You can also double-click an ingredient to add it. Each added ingredient gets its own amount dial and unit selector.</li>
+                  <li>Use the <strong>+/− buttons</strong> or mouse wheel on the dials to set exact amounts. Change the unit for each ingredient independently.</li>
+                  <li>Set <strong>Time to Create</strong> in hours and minutes — this is the full start-to-finish time per batch.</li>
+                  <li>If you make multiple items simultaneously (e.g. 2 cakes in the same oven run), set <strong>Simultaneous Items</strong> — the app automatically calculates the real per-item time.</li>
+                  <li>The <strong>Pricing Preview</strong> panel shows your ingredient cost, estimated labor at your hourly rate, markup, and suggested price in real time.</li>
+                  <li>Click <strong>Save Recipe</strong> when done.</li>
+                </ol>
+                <div class="help-tip">
+                  <strong>Tip:</strong> You can edit any saved recipe later — changes to ingredients or time will immediately reflect in future quotes.
+                </div>
+              </div>
+            </div>
+
+            <!-- Quoting & Invoicing -->
+            <div class="help-card" data-help-section="quotes">
+              <button class="help-card-header" aria-expanded="false">
+                <div class="help-card-title">
+                  <span class="help-icon">🧾</span>
+                  <span>Creating Quotes &amp; Invoices</span>
+                </div>
+                <svg class="help-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6,9 12,15 18,9"/></svg>
+              </button>
+              <div class="help-card-body hidden">
+                <ol class="help-steps">
+                  <li>Click <strong>New Quote</strong> in the sidebar (or the quick action on the Dashboard).</li>
+                  <li>Enter the customer's name, email, phone, and a due date.</li>
+                  <li>Click <strong>Add from Saved Recipes</strong> to pick one or more of your repeat items. Adjust the quantity for each.</li>
+                  <li>Click <strong>Add Custom Item</strong> for a one-off item — enter a name, description, and price directly.</li>
+                  <li>Adjust <strong>Markup %</strong> and <strong>Tax %</strong> for this quote (defaults come from Settings).</li>
+                  <li>Add any special instructions or notes for the customer in the notes field.</li>
+                  <li>Click <strong>Generate Invoice</strong> — BakerOS creates a clean, printable invoice with your bakery name, itemized list, and grand total.</li>
+                  <li>From the invoice view, click <strong>Print Invoice</strong> to save as PDF or print. Click <strong>Mark as Completed</strong> when the order is fulfilled.</li>
+                </ol>
+                <div class="help-tip">
+                  <strong>Tip:</strong> Invoices are automatically numbered (INV-YYYY-XXXX) and saved to Job History so you always have a record.
+                </div>
+              </div>
+            </div>
+
+            <!-- Job History -->
+            <div class="help-card" data-help-section="history">
+              <button class="help-card-header" aria-expanded="false">
+                <div class="help-card-title">
+                  <span class="help-icon">🕐</span>
+                  <span>Job History</span>
+                </div>
+                <svg class="help-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6,9 12,15 18,9"/></svg>
+              </button>
+              <div class="help-card-body hidden">
+                <ol class="help-steps">
+                  <li>Go to <strong>Job History</strong> to see every quote and invoice you've ever created.</li>
+                  <li>Filter by <strong>All / Open / Completed</strong> using the tabs at the top.</li>
+                  <li>Use the <strong>search bar</strong> to find a job by customer name.</li>
+                  <li>Click any row to open the invoice — you can re-print it, or toggle its status between Open and Completed.</li>
+                </ol>
+              </div>
+            </div>
+
+            <!-- Settings -->
+            <div class="help-card" data-help-section="settings">
+              <button class="help-card-header" aria-expanded="false">
+                <div class="help-card-title">
+                  <span class="help-icon">⚙️</span>
+                  <span>Settings</span>
+                </div>
+                <svg class="help-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6,9 12,15 18,9"/></svg>
+              </button>
+              <div class="help-card-body hidden">
+                <ul class="help-list">
+                  <li><strong>Profile</strong> — Edit your bakery name, owner name, and profile photo.</li>
+                  <li><strong>Appearance</strong> — Toggle between Light and Dark mode.</li>
+                  <li><strong>Default Pricing</strong> — Set your hourly labor rate, default markup %, and default tax %. These pre-fill every new quote.</li>
+                  <li><strong>Integrations</strong> — Add your free Spoonacular API key to enable live market price lookups. <a href="https://spoonacular.com/food-api" target="_blank" rel="noopener" class="link">Get a free key →</a></li>
+                  <li><strong>Time Categories</strong> — Customize estimated prep times by product type. These feed into the pricing preview in the recipe builder.</li>
+                  <li><strong>Units</strong> — Set your default unit system (Imperial or Metric).</li>
+                  <li><strong>Delete Profile</strong> — Permanently removes your profile and all associated data. This cannot be undone.</li>
+                </ul>
+              </div>
+            </div>
+
+            <!-- Price Lookup -->
+            <div class="help-card" data-help-section="price-lookup">
+              <button class="help-card-header" aria-expanded="false">
+                <div class="help-card-title">
+                  <span class="help-icon">💲</span>
+                  <span>How Pricing &amp; Cost Estimates Work</span>
+                </div>
+                <svg class="help-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6,9 12,15 18,9"/></svg>
+              </button>
+              <div class="help-card-body hidden">
+                <p class="help-intro">BakerOS calculates a suggested price for every recipe using three components:</p>
+                <ul class="help-list">
+                  <li><strong>Ingredient cost</strong> — sum of all ingredients × their amount × cost per unit in your library.</li>
+                  <li><strong>Labor cost</strong> — your hourly rate × hours per item (accounting for simultaneous items).</li>
+                  <li><strong>Markup</strong> — a percentage added on top to cover overhead, packaging, and profit.</li>
+                </ul>
+                <p style="margin: 0.75rem 0 0.4rem;">The <strong>price lookup</strong> feature sources ingredient costs automatically:</p>
+                <ul class="help-list">
+                  <li>Without an API key: uses a built-in table of average US retail prices for 55+ baking ingredients.</li>
+                  <li>With a Spoonacular API key: queries live market data first, then falls back to the built-in table.</li>
+                  <li>Prices auto-convert between units of the same type (oz ↔ lb, tsp ↔ cup). Cross-type conversions (oz ↔ cup) use per-ingredient density data.</li>
+                  <li>A <em>~ estimated</em> badge appears on any auto-filled price — you can always override it manually.</li>
+                </ul>
+                <div class="help-tip">
+                  <strong>Note:</strong> All prices are estimates. Actual costs vary by region, season, and supplier. Review and adjust ingredient costs periodically to keep your quotes accurate.
+                </div>
+              </div>
+            </div>
+
+            <!-- Tips -->
+            <div class="help-card" data-help-section="tips">
+              <button class="help-card-header" aria-expanded="false">
+                <div class="help-card-title">
+                  <span class="help-icon">✨</span>
+                  <span>Tips &amp; Shortcuts</span>
+                </div>
+                <svg class="help-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6,9 12,15 18,9"/></svg>
+              </button>
+              <div class="help-card-body hidden">
+                <ul class="help-list">
+                  <li><strong>Mouse wheel on dials</strong> — scroll over any amount spinner to increase or decrease the value without clicking.</li>
+                  <li><strong>Double-click ingredients</strong> — in the Recipe Builder, double-click an ingredient chip to add it to the recipe (alternative to drag &amp; drop).</li>
+                  <li><strong>Quick add from builder</strong> — click <strong>+ Add to Library</strong> inside the Recipe Builder to create a new ingredient without leaving the recipe.</li>
+                  <li><strong>Dark mode</strong> — toggle in Settings → Appearance, or it follows your last saved preference per profile.</li>
+                  <li><strong>Multiple profiles</strong> — perfect for managing separate business lines or a shared tablet. Each profile has completely independent ingredients, recipes, jobs, and settings.</li>
+                  <li><strong>Print invoices</strong> — the print view hides all navigation and UI chrome, giving you a clean document ready for PDF export.</li>
+                  <li><strong>All data is local</strong> — BakerOS stores everything in your browser. No account, no server, no subscription. Clear browser data carefully if you want to reset.</li>
+                </ul>
+              </div>
+            </div>
+
+          </div><!-- end .help-grid -->
         </section>
 
       </main>

@@ -2458,6 +2458,129 @@ p  { color: var(--text-2); }
   100% { background: transparent; }
 }
 
+/* ─── 18b. HOW TO USE VIEW ──────────────────────────────── */
+.help-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  max-width: 760px;
+}
+
+.help-card {
+  background: var(--surface);
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+  transition: border-color var(--transition);
+}
+
+.help-card:has(.help-card-header[aria-expanded="true"]) {
+  border-color: var(--accent);
+}
+
+.help-card-header {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.9rem 1.1rem;
+  background: none;
+  border: none;
+  cursor: pointer;
+  text-align: left;
+  gap: 0.75rem;
+  color: var(--text);
+  transition: background var(--transition);
+}
+
+.help-card-header:hover {
+  background: var(--surface-2);
+}
+
+.help-card-title {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  font-weight: 600;
+  font-size: 0.95rem;
+}
+
+.help-icon {
+  font-size: 1.05rem;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+.help-chevron {
+  color: var(--text-3);
+  flex-shrink: 0;
+  transition: transform var(--transition);
+}
+
+.help-card-body {
+  padding: 0 1.1rem 1.1rem;
+  border-top: 1px solid var(--border);
+}
+
+.help-intro {
+  color: var(--text-2);
+  font-size: 0.875rem;
+  margin: 0.75rem 0 0.5rem;
+  line-height: 1.6;
+}
+
+.help-steps {
+  margin: 0.75rem 0 0;
+  padding-left: 1.35rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+}
+
+.help-steps li {
+  font-size: 0.875rem;
+  color: var(--text-2);
+  line-height: 1.6;
+}
+
+.help-steps li strong {
+  color: var(--text);
+}
+
+.help-list {
+  margin: 0.75rem 0 0;
+  padding-left: 1.2rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  list-style: disc;
+}
+
+.help-list li {
+  font-size: 0.875rem;
+  color: var(--text-2);
+  line-height: 1.6;
+}
+
+.help-list li strong {
+  color: var(--text);
+}
+
+.help-tip {
+  margin-top: 0.9rem;
+  padding: 0.65rem 0.85rem;
+  background: var(--accent-light);
+  border-left: 3px solid var(--accent);
+  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+  font-size: 0.82rem;
+  color: var(--text-2);
+  line-height: 1.55;
+}
+
+.help-tip strong {
+  color: var(--accent);
+}
+
 /* ─── 19. PRINT STYLES ──────────────────────────────────── */
 @media print {
   body {

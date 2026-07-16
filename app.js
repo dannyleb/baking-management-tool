@@ -585,6 +585,7 @@
       case 'invoice':        renderInvoice(options); break;
       case 'job-history':    renderJobHistory(); break;
       case 'settings':       renderSettings(); break;
+      case 'help':           /* static — no render needed */ break;
     }
 
     // Scroll to top
@@ -2484,6 +2485,7 @@
     initInvoice();
     initJobHistory();
     initSettings();
+    initHelp();
 
     // Init global spinner instances in modals
     initSpinners();
@@ -2498,6 +2500,25 @@
     } else {
       showProfileSelect();
     }
+  }
+
+  /* ═══════════════════════════════════════════════════════
+     HOW TO USE — accordion toggle
+  ═══════════════════════════════════════════════════════ */
+
+  function initHelp() {
+    document.getElementById('view-help').addEventListener('click', e => {
+      const btn = e.target.closest('.help-card-header');
+      if (!btn) return;
+      const card    = btn.closest('.help-card');
+      const body    = card.querySelector('.help-card-body');
+      const chevron = btn.querySelector('.help-chevron');
+      const isOpen  = btn.getAttribute('aria-expanded') === 'true';
+
+      btn.setAttribute('aria-expanded', String(!isOpen));
+      body.classList.toggle('hidden', isOpen);
+      chevron.style.transform = isOpen ? '' : 'rotate(180deg)';
+    });
   }
 
   // Boot
