@@ -187,6 +187,19 @@ p  { color: var(--text-2); }
 .required { color: var(--accent); }
 .optional { color: var(--text-3); font-size: 0.8rem; font-weight: 400; }
 
+.field-error {
+  display: block;
+  margin-top: 0.3rem;
+  font-size: 0.8rem;
+  color: var(--red);
+}
+
+input.input-error,
+select.input-error {
+  border-color: var(--red) !important;
+  box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.12);
+}
+
 /* ── Price lookup UI ─────────────────────────────────────── */
 .cost-lookup-row {
   display: flex;

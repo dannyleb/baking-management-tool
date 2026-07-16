@@ -567,7 +567,7 @@
   const VIEWS = [
     'onboarding', 'profile-select',
     'dashboard', 'ingredients', 'recipes', 'recipe-builder',
-    'new-quote', 'invoice', 'job-history', 'settings'
+    'new-quote', 'invoice', 'job-history', 'settings', 'help'
   ];
 
   function showView(name, options) {
@@ -834,11 +834,45 @@
   function initOnboarding() {
     bindPhotoUpload('ob-photo-input', 'ob-photo-preview', 'ob-photo-placeholder', b64 => { obPhoto = b64; });
 
+    // Clear field errors as user types
+    document.getElementById('ob-bakery-name').addEventListener('input', () => {
+      document.getElementById('ob-bakery-name-error').classList.add('hidden');
+      document.getElementById('ob-bakery-name').classList.remove('input-error');
+    });
+    document.getElementById('ob-owner-name').addEventListener('input', () => {
+      document.getElementById('ob-owner-name-error').classList.add('hidden');
+      document.getElementById('ob-owner-name').classList.remove('input-error');
+    });
+
     document.getElementById('onboarding-form').addEventListener('submit', e => {
       e.preventDefault();
       const bakeryName = document.getElementById('ob-bakery-name').value.trim();
       const ownerName  = document.getElementById('ob-owner-name').value.trim();
-      if (!bakeryName || !ownerName) return;
+
+      // Manual validation — iOS silently swallows HTML5 required failures
+      const bakeryErr = document.getElementById('ob-bakery-name-error');
+      const ownerErr  = document.getElementById('ob-owner-name-error');
+      const bakeryInput = document.getElementById('ob-bakery-name');
+      const ownerInput  = document.getElementById('ob-owner-name');
+
+      let valid = true;
+      if (!bakeryName) {
+        bakeryErr.classList.remove('hidden');
+        bakeryInput.classList.add('input-error');
+        valid = false;
+      } else {
+        bakeryErr.classList.add('hidden');
+        bakeryInput.classList.remove('input-error');
+      }
+      if (!ownerName) {
+        ownerErr.classList.remove('hidden');
+        ownerInput.classList.add('input-error');
+        valid = false;
+      } else {
+        ownerErr.classList.add('hidden');
+        ownerInput.classList.remove('input-error');
+      }
+      if (!valid) return;
 
       const profile = { id: uuid(), bakeryName, ownerName, photo: obPhoto, createdAt: new Date().toISOString() };
       const profiles = DB.getProfiles();

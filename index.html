@@ -222,14 +222,16 @@
         </div>
         <h2>Welcome! Let's set up your bakery profile.</h2>
         <p class="subtitle">Tell us a bit about your bakery to get started.</p>
-        <form id="onboarding-form">
+        <form id="onboarding-form" novalidate>
           <div class="form-group">
             <label for="ob-bakery-name">Bakery Name <span class="required">*</span></label>
-            <input type="text" id="ob-bakery-name" placeholder="e.g. Sweet Crumbs Bakery" required />
+            <input type="text" id="ob-bakery-name" placeholder="e.g. Sweet Crumbs Bakery" autocomplete="organization" />
+            <span class="field-error hidden" id="ob-bakery-name-error">Please enter your bakery name.</span>
           </div>
           <div class="form-group">
             <label for="ob-owner-name">Your Name <span class="required">*</span></label>
-            <input type="text" id="ob-owner-name" placeholder="e.g. Sarah Johnson" required />
+            <input type="text" id="ob-owner-name" placeholder="e.g. Sarah Johnson" autocomplete="name" />
+            <span class="field-error hidden" id="ob-owner-name-error">Please enter your name.</span>
           </div>
           <div class="form-group">
             <label>Profile Photo <span class="optional">(optional)</span></label>
