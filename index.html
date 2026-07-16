@@ -1,0 +1,1032 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>BakerOS — Baking Management</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <!-- ═══════════════════════════════════════════════
+       TOAST CONTAINER
+  ═══════════════════════════════════════════════ -->
+  <div id="toast-container" aria-live="polite" aria-atomic="false"></div>
+
+  <!-- ═══════════════════════════════════════════════
+       CONFIRM DIALOG
+  ═══════════════════════════════════════════════ -->
+  <div id="confirm-overlay" class="overlay hidden" role="dialog" aria-modal="true" aria-labelledby="confirm-title">
+    <div class="modal confirm-modal">
+      <h3 id="confirm-title">Are you sure?</h3>
+      <p id="confirm-message">This action cannot be undone.</p>
+      <div class="modal-actions">
+        <button id="confirm-cancel" class="btn btn-ghost">Cancel</button>
+        <button id="confirm-ok" class="btn btn-danger">Delete</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════
+       MODAL: ADD / EDIT INGREDIENT
+  ═══════════════════════════════════════════════ -->
+  <div id="ingredient-modal-overlay" class="overlay hidden" role="dialog" aria-modal="true" aria-labelledby="ingredient-modal-title">
+    <div class="modal">
+      <div class="modal-header">
+        <h3 id="ingredient-modal-title">Add Ingredient</h3>
+        <button class="modal-close" data-modal="ingredient-modal-overlay" aria-label="Close">&times;</button>
+      </div>
+      <form id="ingredient-form">
+        <input type="hidden" id="ingredient-id" />
+        <div class="form-group">
+          <label for="ingredient-name">Name <span class="required">*</span></label>
+          <input type="text" id="ingredient-name" placeholder="e.g. All-purpose flour" required />
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label for="ingredient-unit">Default Unit <span class="required">*</span></label>
+            <select id="ingredient-unit" required>
+              <option value="g">g (grams)</option>
+              <option value="kg">kg (kilograms)</option>
+              <option value="oz">oz (ounces)</option>
+              <option value="lb">lb (pounds)</option>
+              <option value="ml">ml (milliliters)</option>
+              <option value="L">L (liters)</option>
+              <option value="fl oz">fl oz</option>
+              <option value="cup">cup</option>
+              <option value="tbsp">tbsp</option>
+              <option value="tsp">tsp</option>
+              <option value="each">each</option>
+              <option value="dozen">dozen</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="ingredient-cost">Cost Per Unit <span class="required">*</span></label>
+            <div class="input-prefix">
+              <span>$</span>
+              <input type="number" id="ingredient-cost" placeholder="0.00" min="0" step="0.01" required />
+            </div>
+          </div>
+        </div>
+        <div class="modal-actions">
+          <button type="button" class="btn btn-ghost" data-modal="ingredient-modal-overlay">Cancel</button>
+          <button type="submit" class="btn btn-primary" id="ingredient-save-btn">Save Ingredient</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════
+       MODAL: RECIPE PICKER (for Quote Builder)
+  ═══════════════════════════════════════════════ -->
+  <div id="recipe-picker-overlay" class="overlay hidden" role="dialog" aria-modal="true" aria-labelledby="recipe-picker-title">
+    <div class="modal modal-lg">
+      <div class="modal-header">
+        <h3 id="recipe-picker-title">Add from Saved Recipes</h3>
+        <button class="modal-close" data-modal="recipe-picker-overlay" aria-label="Close">&times;</button>
+      </div>
+      <div class="modal-search">
+        <input type="text" id="recipe-picker-search" placeholder="Search recipes…" />
+      </div>
+      <div id="recipe-picker-list" class="recipe-picker-list">
+        <!-- Populated dynamically -->
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════
+       MODAL: QUICK CUSTOM ITEM (for Quote Builder)
+  ═══════════════════════════════════════════════ -->
+  <div id="custom-item-modal-overlay" class="overlay hidden" role="dialog" aria-modal="true" aria-labelledby="custom-item-title">
+    <div class="modal">
+      <div class="modal-header">
+        <h3 id="custom-item-title">Add Custom Item</h3>
+        <button class="modal-close" data-modal="custom-item-modal-overlay" aria-label="Close">&times;</button>
+      </div>
+      <form id="custom-item-form">
+        <div class="form-group">
+          <label for="custom-item-name">Item Name <span class="required">*</span></label>
+          <input type="text" id="custom-item-name" placeholder="e.g. Custom Decoration" required />
+        </div>
+        <div class="form-group">
+          <label for="custom-item-desc">Description</label>
+          <input type="text" id="custom-item-desc" placeholder="Optional details…" />
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label for="custom-item-qty">Quantity</label>
+            <div class="spinner" data-min="1" data-max="999" data-step="1" data-decimals="0" data-value="1" id="custom-item-qty-spinner">
+              <button type="button" class="spinner-btn spinner-minus" aria-label="Decrease">−</button>
+              <input type="text" class="spinner-input" value="1" aria-label="Quantity" />
+              <button type="button" class="spinner-btn spinner-plus" aria-label="Increase">+</button>
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="custom-item-price">Unit Price <span class="required">*</span></label>
+            <div class="input-prefix">
+              <span>$</span>
+              <input type="number" id="custom-item-price" placeholder="0.00" min="0" step="0.01" required />
+            </div>
+          </div>
+        </div>
+        <div class="modal-actions">
+          <button type="button" class="btn btn-ghost" data-modal="custom-item-modal-overlay">Cancel</button>
+          <button type="submit" class="btn btn-primary">Add Item</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════
+       MODAL: QUICK ADD INGREDIENT (from Recipe Builder)
+  ═══════════════════════════════════════════════ -->
+  <div id="quick-ingredient-modal-overlay" class="overlay hidden" role="dialog" aria-modal="true" aria-labelledby="quick-ingredient-title">
+    <div class="modal">
+      <div class="modal-header">
+        <h3 id="quick-ingredient-title">Quick Add Ingredient</h3>
+        <button class="modal-close" data-modal="quick-ingredient-modal-overlay" aria-label="Close">&times;</button>
+      </div>
+      <form id="quick-ingredient-form">
+        <div class="form-group">
+          <label for="qi-name">Name <span class="required">*</span></label>
+          <input type="text" id="qi-name" placeholder="e.g. Vanilla extract" required />
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label for="qi-unit">Default Unit</label>
+            <select id="qi-unit">
+              <option value="g">g</option>
+              <option value="kg">kg</option>
+              <option value="oz">oz</option>
+              <option value="lb">lb</option>
+              <option value="ml">ml</option>
+              <option value="L">L</option>
+              <option value="fl oz">fl oz</option>
+              <option value="cup">cup</option>
+              <option value="tbsp">tbsp</option>
+              <option value="tsp">tsp</option>
+              <option value="each">each</option>
+              <option value="dozen">dozen</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="qi-cost">Cost Per Unit</label>
+            <div class="input-prefix">
+              <span>$</span>
+              <input type="number" id="qi-cost" placeholder="0.00" min="0" step="0.01" />
+            </div>
+          </div>
+        </div>
+        <div class="modal-actions">
+          <button type="button" class="btn btn-ghost" data-modal="quick-ingredient-modal-overlay">Cancel</button>
+          <button type="submit" class="btn btn-primary">Add to Library</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════
+       APP SHELL
+  ═══════════════════════════════════════════════ -->
+  <div id="app">
+
+    <!-- ─── ONBOARDING VIEW ───────────────────────── -->
+    <div id="view-onboarding" class="full-page-view hidden">
+      <div class="onboarding-card">
+        <div class="onboarding-logo">
+          <span class="logo-icon">🧁</span>
+          <span class="logo-text">BakerOS</span>
+        </div>
+        <h2>Welcome! Let's set up your bakery profile.</h2>
+        <p class="subtitle">Tell us a bit about your bakery to get started.</p>
+        <form id="onboarding-form">
+          <div class="form-group">
+            <label for="ob-bakery-name">Bakery Name <span class="required">*</span></label>
+            <input type="text" id="ob-bakery-name" placeholder="e.g. Sweet Crumbs Bakery" required />
+          </div>
+          <div class="form-group">
+            <label for="ob-owner-name">Your Name <span class="required">*</span></label>
+            <input type="text" id="ob-owner-name" placeholder="e.g. Sarah Johnson" required />
+          </div>
+          <div class="form-group">
+            <label>Profile Photo <span class="optional">(optional)</span></label>
+            <div class="photo-upload-area" id="ob-photo-area">
+              <div class="photo-preview-wrapper">
+                <img id="ob-photo-preview" src="" alt="Profile preview" class="photo-preview hidden" />
+                <div class="photo-placeholder" id="ob-photo-placeholder">
+                  <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                  <span>Upload photo</span>
+                </div>
+              </div>
+              <input type="file" id="ob-photo-input" accept="image/*" class="hidden" />
+            </div>
+          </div>
+          <button type="submit" class="btn btn-primary btn-full">Get Started →</button>
+        </form>
+      </div>
+    </div>
+
+    <!-- ─── PROFILE SELECT VIEW ───────────────────── -->
+    <div id="view-profile-select" class="full-page-view hidden">
+      <div class="profile-select-container">
+        <div class="profile-select-header">
+          <div class="onboarding-logo">
+            <span class="logo-icon">🧁</span>
+            <span class="logo-text">BakerOS</span>
+          </div>
+          <h2>Welcome back</h2>
+          <p class="subtitle">Choose a bakery to continue.</p>
+        </div>
+        <div id="profile-cards-grid" class="profile-cards-grid">
+          <!-- Populated dynamically -->
+        </div>
+        <div class="profile-select-actions">
+          <button id="new-bakery-btn" class="btn btn-outline">+ New Bakery</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ─── MAIN APP SHELL (sidebar + content) ───── -->
+    <div id="app-shell" class="hidden">
+
+      <!-- SIDEBAR -->
+      <aside id="sidebar" class="sidebar">
+        <div class="sidebar-header">
+          <div class="sidebar-logo">
+            <span class="logo-icon">🧁</span>
+            <span class="logo-text">BakerOS</span>
+          </div>
+          <button id="sidebar-toggle" class="sidebar-toggle" aria-label="Toggle sidebar">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+          </button>
+        </div>
+
+        <div class="sidebar-profile">
+          <div class="sidebar-avatar" id="sidebar-avatar">
+            <img id="sidebar-photo" src="" alt="" class="hidden" />
+            <span id="sidebar-initials"></span>
+          </div>
+          <div class="sidebar-profile-info">
+            <div class="sidebar-bakery-name" id="sidebar-bakery-name"></div>
+            <div class="sidebar-owner-name" id="sidebar-owner-name"></div>
+          </div>
+        </div>
+
+        <nav class="sidebar-nav" role="navigation" aria-label="Main navigation">
+          <a href="#" class="nav-link active" data-view="dashboard">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+            <span>Dashboard</span>
+          </a>
+          <a href="#" class="nav-link" data-view="ingredients">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg>
+            <span>Ingredients</span>
+          </a>
+          <a href="#" class="nav-link" data-view="recipes">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>
+            <span>Saved Recipes</span>
+          </a>
+          <a href="#" class="nav-link" data-view="new-quote">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14,2 14,8 20,8"/><line x1="12" y1="18" x2="12" y2="12"/><line x1="9" y1="15" x2="15" y2="15"/></svg>
+            <span>New Quote</span>
+          </a>
+          <a href="#" class="nav-link" data-view="job-history">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12,6 12,12 16,14"/></svg>
+            <span>Job History</span>
+          </a>
+          <a href="#" class="nav-link" data-view="settings">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+            <span>Settings</span>
+          </a>
+        </nav>
+
+        <div class="sidebar-footer">
+          <button id="switch-profile-btn" class="btn-link">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+            Switch Profile
+          </button>
+        </div>
+      </aside>
+
+      <!-- MOBILE OVERLAY -->
+      <div id="sidebar-overlay" class="sidebar-overlay hidden"></div>
+
+      <!-- MAIN CONTENT AREA -->
+      <main id="main-content" class="main-content">
+
+        <!-- ── DASHBOARD VIEW ─────────────────────── -->
+        <section id="view-dashboard" class="view-section hidden">
+          <div class="view-header">
+            <div>
+              <h1 id="dashboard-greeting">Good morning!</h1>
+              <p class="view-subtitle" id="dashboard-subtitle">Here's what's happening with your bakery.</p>
+            </div>
+          </div>
+
+          <div class="stats-row">
+            <div class="stat-card">
+              <div class="stat-icon stat-icon-orange">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg>
+              </div>
+              <div class="stat-info">
+                <div class="stat-value" id="stat-ingredients">0</div>
+                <div class="stat-label">Ingredients</div>
+              </div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-icon stat-icon-purple">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>
+              </div>
+              <div class="stat-info">
+                <div class="stat-value" id="stat-recipes">0</div>
+                <div class="stat-label">Saved Recipes</div>
+              </div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-icon stat-icon-blue">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14,2 14,8 20,8"/></svg>
+              </div>
+              <div class="stat-info">
+                <div class="stat-value" id="stat-open-quotes">0</div>
+                <div class="stat-label">Open Quotes</div>
+              </div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-icon stat-icon-green">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20,6 9,17 4,12"/></svg>
+              </div>
+              <div class="stat-info">
+                <div class="stat-value" id="stat-completed">0</div>
+                <div class="stat-label">Completed Jobs</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="dashboard-grid">
+            <div class="dashboard-section">
+              <div class="section-header">
+                <h2>Recent Activity</h2>
+              </div>
+              <div id="recent-activity-list" class="recent-activity-list">
+                <!-- Populated dynamically -->
+              </div>
+            </div>
+
+            <div class="dashboard-section">
+              <div class="section-header">
+                <h2>Quick Actions</h2>
+              </div>
+              <div class="quick-actions">
+                <button class="quick-action-btn" data-action="add-ingredient">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
+                  Add Ingredient
+                </button>
+                <button class="quick-action-btn" data-action="new-recipe">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>
+                  New Recipe
+                </button>
+                <button class="quick-action-btn" data-action="new-quote">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14,2 14,8 20,8"/><line x1="12" y1="18" x2="12" y2="12"/><line x1="9" y1="15" x2="15" y2="15"/></svg>
+                  New Quote
+                </button>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ── INGREDIENTS VIEW ───────────────────── -->
+        <section id="view-ingredients" class="view-section hidden">
+          <div class="view-header">
+            <div>
+              <h1>Ingredients</h1>
+              <p class="view-subtitle">Manage your ingredient library and costs.</p>
+            </div>
+            <button class="btn btn-primary" id="add-ingredient-btn">+ Add Ingredient</button>
+          </div>
+
+          <div class="search-bar-wrapper">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            <input type="text" id="ingredient-search" placeholder="Search ingredients…" class="search-input" />
+          </div>
+
+          <div id="ingredients-empty" class="empty-state hidden">
+            <div class="empty-icon">📦</div>
+            <h3>No ingredients yet</h3>
+            <p>Add your first ingredient to start building recipes.</p>
+            <button class="btn btn-primary" id="add-ingredient-empty-btn">+ Add Ingredient</button>
+          </div>
+
+          <div id="ingredients-table-wrapper" class="table-wrapper">
+            <table class="data-table" id="ingredients-table">
+              <thead>
+                <tr>
+                  <th>Name</th>
+                  <th>Default Unit</th>
+                  <th>Cost Per Unit</th>
+                  <th class="actions-col">Actions</th>
+                </tr>
+              </thead>
+              <tbody id="ingredients-tbody">
+                <!-- Populated dynamically -->
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <!-- ── SAVED RECIPES VIEW ─────────────────── -->
+        <section id="view-recipes" class="view-section hidden">
+          <div class="view-header">
+            <div>
+              <h1>Saved Recipes</h1>
+              <p class="view-subtitle">Your repeat items and baking templates.</p>
+            </div>
+            <button class="btn btn-primary" id="create-recipe-btn">+ Create Recipe</button>
+          </div>
+
+          <div class="filter-bar">
+            <button class="filter-chip active" data-category="all">All</button>
+            <button class="filter-chip" data-category="Single Layer Cake">Cakes</button>
+            <button class="filter-chip" data-category="cupcakes">Cupcakes</button>
+            <button class="filter-chip" data-category="cake-pops">Cake Pops</button>
+            <button class="filter-chip" data-category="cookies">Cookies</button>
+            <button class="filter-chip" data-category="other">Other</button>
+          </div>
+
+          <div id="recipes-empty" class="empty-state hidden">
+            <div class="empty-icon">📖</div>
+            <h3>No recipes yet</h3>
+            <p>Create your first saved recipe to speed up quoting.</p>
+            <button class="btn btn-primary" id="create-recipe-empty-btn">+ Create Recipe</button>
+          </div>
+
+          <div id="recipes-grid" class="recipes-grid">
+            <!-- Populated dynamically -->
+          </div>
+        </section>
+
+        <!-- ── RECIPE BUILDER VIEW ────────────────── -->
+        <section id="view-recipe-builder" class="view-section hidden">
+          <div class="view-header">
+            <button class="btn btn-ghost btn-icon" id="recipe-builder-back">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15,18 9,12 15,6"/></svg>
+              Back
+            </button>
+            <h1 id="recipe-builder-title">New Recipe</h1>
+            <button class="btn btn-primary" id="save-recipe-btn">Save Recipe</button>
+          </div>
+
+          <div class="recipe-builder-form">
+            <input type="hidden" id="recipe-id" />
+
+            <!-- Section 1: Details -->
+            <div class="builder-section">
+              <h2 class="builder-section-title">Details</h2>
+              <div class="form-group">
+                <label for="recipe-name">Recipe Name <span class="required">*</span></label>
+                <input type="text" id="recipe-name" placeholder="e.g. Classic Vanilla Birthday Cake" />
+              </div>
+              <div class="form-row">
+                <div class="form-group">
+                  <label for="recipe-category">Category</label>
+                  <select id="recipe-category">
+                    <option value="Single Layer Cake">Single Layer Cake</option>
+                    <option value="Double Layer Cake">Double Layer Cake</option>
+                    <option value="Triple Layer Cake">Triple Layer Cake</option>
+                    <option value="Sheet Cake">Sheet Cake</option>
+                    <option value="6 Cupcakes">6 Cupcakes</option>
+                    <option value="12 Cupcakes">12 Cupcakes</option>
+                    <option value="24 Cupcakes">24 Cupcakes</option>
+                    <option value="6 Cake Pops">6 Cake Pops</option>
+                    <option value="12 Cake Pops">12 Cake Pops</option>
+                    <option value="24 Cake Pops">24 Cake Pops</option>
+                    <option value="Cookies (dozen)">Cookies (dozen)</option>
+                    <option value="Brownies">Brownies</option>
+                    <option value="Bread Loaf">Bread Loaf</option>
+                    <option value="Custom">Custom</option>
+                  </select>
+                </div>
+              </div>
+              <div class="form-group">
+                <label for="recipe-description">Description</label>
+                <textarea id="recipe-description" rows="3" placeholder="Describe this recipe, flavor profile, notes for future reference…"></textarea>
+              </div>
+            </div>
+
+            <!-- Section 2: Photos -->
+            <div class="builder-section">
+              <h2 class="builder-section-title">Photos</h2>
+              <div class="photo-upload-grid" id="recipe-photos-grid">
+                <div class="photo-add-slot" id="recipe-photo-add">
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21,15 16,10 5,21"/></svg>
+                  <span>Add Photo</span>
+                  <input type="file" id="recipe-photo-input" accept="image/*" multiple class="hidden" />
+                </div>
+              </div>
+              <p class="hint-text">Up to 5 photos. Click or drag to upload.</p>
+            </div>
+
+            <!-- Section 3: Ingredients -->
+            <div class="builder-section">
+              <h2 class="builder-section-title">Ingredients</h2>
+              <div class="ingredient-builder-layout">
+
+                <!-- LEFT: Library panel -->
+                <div class="ingredient-library-panel">
+                  <div class="panel-header">
+                    <h3>Ingredient Library</h3>
+                    <button class="btn-icon-sm" id="quick-add-ingredient-btn" title="Add new ingredient">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                    </button>
+                  </div>
+                  <input type="text" id="library-search" placeholder="Filter ingredients…" class="panel-search" />
+                  <div id="ingredient-chips" class="ingredient-chips">
+                    <!-- Populated dynamically -->
+                  </div>
+                  <p class="hint-text">Drag to recipe or double-click to add</p>
+                </div>
+
+                <!-- RIGHT: Recipe ingredients drop zone -->
+                <div class="recipe-ingredients-panel">
+                  <div class="panel-header">
+                    <h3>Recipe Ingredients</h3>
+                  </div>
+                  <div id="recipe-drop-zone" class="recipe-drop-zone">
+                    <div id="recipe-ingredients-empty" class="drop-empty-state">
+                      <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+                      <p>Drag ingredients here<br/>or double-click from library</p>
+                    </div>
+                    <div id="recipe-ingredients-list" class="recipe-ingredients-list">
+                      <!-- Populated dynamically -->
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Section 4: Time -->
+            <div class="builder-section">
+              <h2 class="builder-section-title">Time to Create</h2>
+              <p class="section-hint">How long does this take to make (start to finish)?</p>
+              <div class="time-inputs">
+                <div class="time-input-group">
+                  <label>Hours</label>
+                  <div class="spinner" data-min="0" data-max="99" data-step="1" data-decimals="0" data-value="0" id="time-hours-spinner">
+                    <button type="button" class="spinner-btn spinner-minus" aria-label="Decrease">−</button>
+                    <input type="text" class="spinner-input" value="0" aria-label="Hours" />
+                    <button type="button" class="spinner-btn spinner-plus" aria-label="Increase">+</button>
+                  </div>
+                </div>
+                <div class="time-input-group">
+                  <label>Minutes</label>
+                  <div class="spinner" data-min="0" data-max="59" data-step="5" data-decimals="0" data-value="0" id="time-minutes-spinner">
+                    <button type="button" class="spinner-btn spinner-minus" aria-label="Decrease">−</button>
+                    <input type="text" class="spinner-input" value="0" aria-label="Minutes" />
+                    <button type="button" class="spinner-btn spinner-plus" aria-label="Increase">+</button>
+                  </div>
+                </div>
+              </div>
+              <div class="form-group" style="margin-top: 1rem;">
+                <label for="simultaneous-items">How many items can you make simultaneously?</label>
+                <div class="spinner" data-min="1" data-max="100" data-step="1" data-decimals="0" data-value="1" id="simultaneous-spinner" style="max-width:160px;">
+                  <button type="button" class="spinner-btn spinner-minus" aria-label="Decrease">−</button>
+                  <input type="text" class="spinner-input" value="1" aria-label="Simultaneous items" />
+                  <button type="button" class="spinner-btn spinner-plus" aria-label="Increase">+</button>
+                </div>
+              </div>
+              <div id="time-per-item-display" class="time-per-item-display hidden">
+                Making <strong id="tpi-count">1</strong> simultaneously → <strong id="tpi-time">0 hr 0 min</strong> per item
+              </div>
+            </div>
+
+            <!-- Section 5: Pricing Preview -->
+            <div class="builder-section">
+              <h2 class="builder-section-title">Pricing Preview</h2>
+              <p class="section-hint">Override defaults for this recipe only, or leave blank to use your settings.</p>
+              <div class="pricing-overrides">
+                <div class="form-row">
+                  <div class="form-group">
+                    <label for="recipe-hourly-rate">Hourly Rate</label>
+                    <div class="input-prefix">
+                      <span>$</span>
+                      <input type="number" id="recipe-hourly-rate" placeholder="From settings" min="0" step="0.01" />
+                    </div>
+                  </div>
+                  <div class="form-group">
+                    <label for="recipe-markup">Markup %</label>
+                    <input type="number" id="recipe-markup" placeholder="From settings" min="0" step="1" />
+                  </div>
+                </div>
+              </div>
+              <div class="pricing-preview-card" id="pricing-preview">
+                <div class="pricing-row">
+                  <span>Ingredient Cost</span>
+                  <span id="pp-ingredient-cost">$0.00</span>
+                </div>
+                <div class="pricing-row">
+                  <span id="pp-labor-label">Labor (0 hrs @ $0/hr)</span>
+                  <span id="pp-labor-cost">$0.00</span>
+                </div>
+                <div class="pricing-row">
+                  <span id="pp-markup-label">Markup (0%)</span>
+                  <span id="pp-markup-amount">$0.00</span>
+                </div>
+                <div class="pricing-row pricing-total">
+                  <span>Suggested Price</span>
+                  <span id="pp-total">$0.00</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="builder-footer">
+              <button class="btn btn-ghost" id="save-recipe-cancel">Cancel</button>
+              <button class="btn btn-primary btn-lg" id="save-recipe-footer-btn">Save Recipe</button>
+            </div>
+          </div>
+        </section>
+
+        <!-- ── NEW QUOTE VIEW ─────────────────────── -->
+        <section id="view-new-quote" class="view-section hidden">
+          <div class="view-header">
+            <div>
+              <h1 id="quote-view-title">New Quote</h1>
+              <p class="view-subtitle">Build a quote for your customer.</p>
+            </div>
+            <button class="btn btn-primary" id="generate-invoice-btn">Generate Invoice</button>
+          </div>
+
+          <div class="quote-form">
+            <input type="hidden" id="quote-job-id" />
+
+            <!-- Customer Info -->
+            <div class="builder-section">
+              <h2 class="builder-section-title">Customer</h2>
+              <div class="form-row">
+                <div class="form-group">
+                  <label for="quote-customer-name">Customer Name <span class="required">*</span></label>
+                  <input type="text" id="quote-customer-name" placeholder="Jane Smith" />
+                </div>
+                <div class="form-group">
+                  <label for="quote-due-date">Due Date</label>
+                  <input type="date" id="quote-due-date" />
+                </div>
+              </div>
+              <div class="form-row">
+                <div class="form-group">
+                  <label for="quote-email">Email</label>
+                  <input type="email" id="quote-email" placeholder="jane@example.com" />
+                </div>
+                <div class="form-group">
+                  <label for="quote-phone">Phone</label>
+                  <input type="tel" id="quote-phone" placeholder="(555) 000-0000" />
+                </div>
+              </div>
+            </div>
+
+            <!-- Items -->
+            <div class="builder-section">
+              <div class="section-header-inline">
+                <h2 class="builder-section-title">Items</h2>
+                <div class="item-add-btns">
+                  <button class="btn btn-outline btn-sm" id="add-from-recipes-btn">+ From Saved Recipes</button>
+                  <button class="btn btn-outline btn-sm" id="add-custom-item-btn">+ Custom Item</button>
+                </div>
+              </div>
+
+              <div id="quote-items-empty" class="empty-state-inline">
+                <p>No items added yet. Add from your saved recipes or create a custom item.</p>
+              </div>
+
+              <div id="quote-items-list" class="quote-items-list">
+                <!-- Populated dynamically -->
+              </div>
+            </div>
+
+            <!-- Notes -->
+            <div class="builder-section">
+              <h2 class="builder-section-title">Notes</h2>
+              <textarea id="quote-notes" rows="3" placeholder="Special instructions, allergies, delivery details…"></textarea>
+            </div>
+
+            <!-- Pricing Summary -->
+            <div class="builder-section">
+              <h2 class="builder-section-title">Pricing</h2>
+              <div class="pricing-form-row">
+                <div class="form-group">
+                  <label for="quote-hourly-rate">Hourly Rate</label>
+                  <div class="input-prefix">
+                    <span>$</span>
+                    <input type="number" id="quote-hourly-rate" placeholder="0.00" min="0" step="0.01" />
+                  </div>
+                </div>
+                <div class="form-group">
+                  <label for="quote-markup">Markup %</label>
+                  <input type="number" id="quote-markup" placeholder="0" min="0" step="1" />
+                </div>
+                <div class="form-group">
+                  <label for="quote-tax">Tax %</label>
+                  <input type="number" id="quote-tax" placeholder="0" min="0" step="0.1" />
+                </div>
+              </div>
+              <div class="quote-summary-card">
+                <div class="pricing-row">
+                  <span>Subtotal</span>
+                  <span id="qs-subtotal">$0.00</span>
+                </div>
+                <div class="pricing-row">
+                  <span id="qs-markup-label">Markup (0%)</span>
+                  <span id="qs-markup">$0.00</span>
+                </div>
+                <div class="pricing-row">
+                  <span id="qs-tax-label">Tax (0%)</span>
+                  <span id="qs-tax">$0.00</span>
+                </div>
+                <div class="pricing-row pricing-total">
+                  <span>Total</span>
+                  <span id="qs-total">$0.00</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="builder-footer">
+              <button class="btn btn-ghost" id="quote-cancel-btn">Cancel</button>
+              <button class="btn btn-primary btn-lg" id="generate-invoice-footer-btn">Generate Invoice</button>
+            </div>
+          </div>
+        </section>
+
+        <!-- ── INVOICE VIEW ───────────────────────── -->
+        <section id="view-invoice" class="view-section hidden">
+          <div class="view-header no-print">
+            <button class="btn btn-ghost btn-icon" id="invoice-back-btn">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15,18 9,12 15,6"/></svg>
+              Back
+            </button>
+            <div class="invoice-actions">
+              <button class="btn btn-outline" id="invoice-edit-btn">Back to Edit</button>
+              <button class="btn btn-outline" id="invoice-complete-btn">Mark as Completed</button>
+              <button class="btn btn-primary" onclick="window.print()">Print Invoice</button>
+            </div>
+          </div>
+
+          <div class="invoice-document" id="invoice-document">
+            <div class="invoice-header">
+              <div class="invoice-bakery-info">
+                <img id="inv-bakery-photo" src="" alt="" class="invoice-bakery-photo hidden" />
+                <div>
+                  <h1 id="inv-bakery-name" class="invoice-bakery-name"></h1>
+                  <p id="inv-owner-name" class="invoice-owner-name"></p>
+                </div>
+              </div>
+              <div class="invoice-meta">
+                <div class="invoice-meta-row">
+                  <span class="inv-label">Invoice #</span>
+                  <span id="inv-number" class="inv-value"></span>
+                </div>
+                <div class="invoice-meta-row">
+                  <span class="inv-label">Date</span>
+                  <span id="inv-date" class="inv-value"></span>
+                </div>
+                <div class="invoice-meta-row">
+                  <span class="inv-label">Due Date</span>
+                  <span id="inv-due-date" class="inv-value"></span>
+                </div>
+                <div class="invoice-meta-row">
+                  <span class="inv-label">Status</span>
+                  <span id="inv-status" class="status-badge"></span>
+                </div>
+              </div>
+            </div>
+
+            <div class="invoice-customer-section">
+              <h3>Bill To</h3>
+              <div id="inv-customer-name" class="inv-customer-name"></div>
+              <div id="inv-customer-email"></div>
+              <div id="inv-customer-phone"></div>
+            </div>
+
+            <table class="invoice-table">
+              <thead>
+                <tr>
+                  <th>Item</th>
+                  <th class="text-center">Qty</th>
+                  <th class="text-right">Unit Price</th>
+                  <th class="text-right">Total</th>
+                </tr>
+              </thead>
+              <tbody id="inv-items-tbody">
+                <!-- Populated dynamically -->
+              </tbody>
+            </table>
+
+            <div class="invoice-totals">
+              <div class="invoice-totals-table">
+                <div class="invoice-total-row">
+                  <span>Subtotal</span>
+                  <span id="inv-subtotal"></span>
+                </div>
+                <div class="invoice-total-row" id="inv-markup-row">
+                  <span id="inv-markup-label">Markup</span>
+                  <span id="inv-markup"></span>
+                </div>
+                <div class="invoice-total-row" id="inv-tax-row">
+                  <span id="inv-tax-label">Tax</span>
+                  <span id="inv-tax"></span>
+                </div>
+                <div class="invoice-total-row invoice-grand-total">
+                  <span>Total</span>
+                  <span id="inv-total"></span>
+                </div>
+              </div>
+            </div>
+
+            <div class="invoice-notes" id="inv-notes-section">
+              <h3>Notes</h3>
+              <p id="inv-notes"></p>
+            </div>
+
+            <div class="invoice-footer-note">
+              <p>Thank you for your business!</p>
+            </div>
+          </div>
+        </section>
+
+        <!-- ── JOB HISTORY VIEW ───────────────────── -->
+        <section id="view-job-history" class="view-section hidden">
+          <div class="view-header">
+            <div>
+              <h1>Job History</h1>
+              <p class="view-subtitle">All your quotes and completed jobs.</p>
+            </div>
+            <button class="btn btn-primary" id="new-job-btn">+ New Quote</button>
+          </div>
+
+          <div class="filter-toolbar">
+            <div class="search-bar-wrapper">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+              <input type="text" id="job-search" placeholder="Search by customer…" class="search-input" />
+            </div>
+            <div class="filter-chips">
+              <button class="filter-chip active" data-status="all">All</button>
+              <button class="filter-chip" data-status="open">Open</button>
+              <button class="filter-chip" data-status="completed">Completed</button>
+            </div>
+          </div>
+
+          <div id="jobs-empty" class="empty-state hidden">
+            <div class="empty-icon">📋</div>
+            <h3>No jobs yet</h3>
+            <p>Create your first quote to start tracking orders.</p>
+            <button class="btn btn-primary" id="new-job-empty-btn">+ New Quote</button>
+          </div>
+
+          <div id="jobs-table-wrapper" class="table-wrapper">
+            <table class="data-table" id="jobs-table">
+              <thead>
+                <tr>
+                  <th>Invoice #</th>
+                  <th>Customer</th>
+                  <th>Date</th>
+                  <th>Items</th>
+                  <th>Total</th>
+                  <th>Status</th>
+                  <th class="actions-col">Actions</th>
+                </tr>
+              </thead>
+              <tbody id="jobs-tbody">
+                <!-- Populated dynamically -->
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <!-- ── SETTINGS VIEW ─────────────────────── -->
+        <section id="view-settings" class="view-section hidden">
+          <div class="view-header">
+            <div>
+              <h1>Settings</h1>
+              <p class="view-subtitle">Manage your bakery profile and preferences.</p>
+            </div>
+          </div>
+
+          <div class="settings-layout">
+
+            <!-- Profile Settings -->
+            <div class="settings-section">
+              <h2 class="settings-section-title">Profile</h2>
+              <div class="settings-card">
+                <div class="form-group">
+                  <label for="settings-bakery-name">Bakery Name</label>
+                  <input type="text" id="settings-bakery-name" />
+                </div>
+                <div class="form-group">
+                  <label for="settings-owner-name">Your Name</label>
+                  <input type="text" id="settings-owner-name" />
+                </div>
+                <div class="form-group">
+                  <label>Profile Photo</label>
+                  <div class="settings-photo-row">
+                    <div class="sidebar-avatar settings-avatar" id="settings-avatar">
+                      <img id="settings-photo-preview" src="" alt="" class="hidden" />
+                      <span id="settings-initials"></span>
+                    </div>
+                    <button class="btn btn-outline btn-sm" id="settings-change-photo-btn">Change Photo</button>
+                    <input type="file" id="settings-photo-input" accept="image/*" class="hidden" />
+                  </div>
+                </div>
+                <div class="settings-actions-row">
+                  <button class="btn btn-primary" id="save-profile-btn">Save Profile</button>
+                  <button class="btn btn-danger-outline" id="delete-profile-btn">Delete Profile</button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Appearance -->
+            <div class="settings-section">
+              <h2 class="settings-section-title">Appearance</h2>
+              <div class="settings-card">
+                <div class="settings-row">
+                  <div>
+                    <div class="settings-row-label">Theme</div>
+                    <div class="settings-row-hint">Choose light or dark mode</div>
+                  </div>
+                  <div class="theme-toggle">
+                    <span class="theme-option" id="theme-light-label">Light</span>
+                    <label class="toggle-switch" for="theme-toggle-input" aria-label="Toggle dark mode">
+                      <input type="checkbox" id="theme-toggle-input" />
+                      <span class="toggle-track">
+                        <span class="toggle-thumb"></span>
+                      </span>
+                    </label>
+                    <span class="theme-option" id="theme-dark-label">Dark</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Default Pricing -->
+            <div class="settings-section">
+              <h2 class="settings-section-title">Default Pricing</h2>
+              <div class="settings-card">
+                <div class="form-row">
+                  <div class="form-group">
+                    <label for="settings-hourly-rate">Hourly Rate</label>
+                    <div class="input-prefix">
+                      <span>$</span>
+                      <input type="number" id="settings-hourly-rate" placeholder="25.00" min="0" step="0.01" />
+                    </div>
+                  </div>
+                  <div class="form-group">
+                    <label for="settings-markup">Default Markup %</label>
+                    <input type="number" id="settings-markup" placeholder="20" min="0" step="1" />
+                  </div>
+                  <div class="form-group">
+                    <label for="settings-tax">Default Tax %</label>
+                    <input type="number" id="settings-tax" placeholder="0" min="0" step="0.1" />
+                  </div>
+                </div>
+                <button class="btn btn-primary" id="save-pricing-btn">Save Pricing Defaults</button>
+              </div>
+            </div>
+
+            <!-- Time Categories -->
+            <div class="settings-section">
+              <h2 class="settings-section-title">Time Categories</h2>
+              <div class="settings-card">
+                <p class="hint-text" style="margin-bottom:1rem;">Estimated prep times per category — used for pricing calculations.</p>
+                <div id="time-categories-list" class="time-categories-list">
+                  <!-- Populated dynamically -->
+                </div>
+                <button class="btn btn-outline btn-sm" id="add-time-category-btn" style="margin-top:0.75rem;">+ Add Category</button>
+              </div>
+            </div>
+
+            <!-- Units -->
+            <div class="settings-section">
+              <h2 class="settings-section-title">Units</h2>
+              <div class="settings-card">
+                <div class="settings-row">
+                  <div>
+                    <div class="settings-row-label">Default Unit System</div>
+                    <div class="settings-row-hint">Used when adding new ingredients</div>
+                  </div>
+                  <div class="units-toggle">
+                    <button class="toggle-option active" data-units="imperial" id="units-imperial-btn">Imperial</button>
+                    <button class="toggle-option" data-units="metric" id="units-metric-btn">Metric</button>
+                  </div>
+                </div>
+                <button class="btn btn-primary" id="save-units-btn" style="margin-top:1rem;">Save Units</button>
+              </div>
+            </div>
+
+          </div>
+        </section>
+
+      </main>
+    </div><!-- end #app-shell -->
+  </div><!-- end #app -->
+
+  <script src="app.js"></script>
+</body>
+</html>
