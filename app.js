@@ -186,31 +186,45 @@
     const fromType = UNIT_TYPE_MAP[fromUnit];
     const toType   = UNIT_TYPE_MAP[toUnit];
 
-    // Same measurement type: simple ratio
+    // Same measurement type: simple ratio.
+    // UNIT_TO_BASE stores base-units-per-unit (g per lb, ml per cup, etc.)
+    // price per toUnit = price per fromUnit × (fromBase / toBase)
+    //   e.g. $0.80/lb → $/oz: 0.80 × (453.592g/lb ÷ 28.35g/oz) = $0.05/oz  ✓
+    // Wait — that gives 0.80 × 16 = 12.8. WRONG direction.
+    // Correct: price per oz = price per lb ÷ (lb per oz) = price per lb × (g/oz ÷ g/lb)
+    //   = 0.80 × (28.35 / 453.59) = 0.80 × 0.0625 = 0.05  ✓
+    // So the factor is (toBase / fromBase).
     if (fromType === toType) {
-      const fromBase = UNIT_TO_BASE[fromUnit]; // e.g. grams per oz
-      const toBase   = UNIT_TO_BASE[toUnit];   // e.g. grams per lb
-      return pricePerFromUnit * (fromBase / toBase);
+      const fromBase = UNIT_TO_BASE[fromUnit];
+      const toBase   = UNIT_TO_BASE[toUnit];
+      return pricePerFromUnit * (toBase / fromBase);
     }
 
-    // Cross-type weight ↔ volume: need ingredient density (g per cup)
+    // Cross-type weight ↔ volume: need ingredient density (g per cup).
     if (
       (fromType === 'weight' || fromType === 'volume') &&
       (toType   === 'weight' || toType   === 'volume')
     ) {
-      const key = ingredientName ? findPriceEntry(ingredientName) : null;
+      const key     = ingredientName ? findPriceEntry(ingredientName) : null;
       const density = key ? BAKING_PRICES[key].density : null; // g per cup
-      if (!density) return null; // can't convert without density
+      if (!density) return null;
 
       const gPerMl = density / UNIT_TO_BASE.cup; // g per ml
 
       if (fromType === 'weight' && toType === 'volume') {
+        // price/g = price/fromWeightUnit ÷ (g per fromWeightUnit)
+        // price/ml = price/g × (g per ml)   — 1 ml contains gPerMl grams
+        // price/toVolumeUnit = price/ml × (ml per toVolumeUnit)
         const pricePerG  = pricePerFromUnit / UNIT_TO_BASE[fromUnit];
-        const pricePerMl = pricePerG / gPerMl;
+        const pricePerMl = pricePerG * gPerMl;
         return pricePerMl * UNIT_TO_BASE[toUnit];
       } else {
+        // volume → weight
+        // price/ml = price/fromVolumeUnit ÷ (ml per fromVolumeUnit)
+        // price/g  = price/ml ÷ (g per ml)  — 1 g occupies 1/gPerMl ml
+        // price/toWeightUnit = price/g × (g per toWeightUnit)
         const pricePerMl = pricePerFromUnit / UNIT_TO_BASE[fromUnit];
-        const pricePerG  = pricePerMl * gPerMl;
+        const pricePerG  = pricePerMl / gPerMl;
         return pricePerG * UNIT_TO_BASE[toUnit];
       }
     }
@@ -277,6 +291,10 @@
     qi:   { fetchedPrice: null, fetchedUnit: null, fetchedName: null },
   };
 
+  // Suppresses the cost-field `input` listener during programmatic value writes,
+  // guarding against browsers that fire `input` on .value assignments.
+  const _skipClear = { main: false, qi: false };
+
   /**
    * Shared helper: trigger a price lookup for a modal.
    * @param {'main'|'qi'} which  - which modal
@@ -318,8 +336,8 @@
     const state = PriceLookupState[which];
     state.fetchedName = name;
 
+    _skipClear[which] = true;
     if (result.unitMismatch) {
-      // Show the price in the table's native unit and change the unit selector
       costEl.value = result.price.toFixed(4).replace(/\.?0+$/, '').replace(/(\.\d{2})\d+/, '$1');
       unitEl.value = result.unit;
       state.fetchedPrice = result.price;
@@ -334,6 +352,7 @@
       statusEl.textContent = `Source: ${src}`;
       statusEl.className = 'price-lookup-status ok';
     }
+    _skipClear[which] = false;
 
     badgeEl.classList.remove('hidden');
   }
@@ -354,18 +373,21 @@
     const newUnit = unitEl.value;
     const converted = convertPrice(state.fetchedPrice, state.fetchedUnit, newUnit, state.fetchedName);
 
+    _skipClear[which] = true;
     if (converted === null) {
       statusEl.textContent = `Can't auto-convert ${state.fetchedUnit} → ${newUnit} for this ingredient. Enter price manually.`;
       statusEl.className = 'price-lookup-status warn';
       badgeEl.classList.add('hidden');
       costEl.value = '';
-      state.fetchedPrice = null; // clear so manual entry isn't overridden
+      state.fetchedPrice = null;
     } else {
       costEl.value = converted.toFixed(4).replace(/\.?0+$/, '').replace(/(\.\d{2})\d+/, '$1');
       state.fetchedPrice = converted;
       state.fetchedUnit  = newUnit;
+      statusEl.textContent = `Auto-converted to per ${newUnit}`;
       statusEl.className = 'price-lookup-status ok';
     }
+    _skipClear[which] = false;
   }
 
   /** Escape HTML to prevent injection */
@@ -1020,7 +1042,7 @@
     document.getElementById('ingredient-unit').addEventListener('change', () => onUnitChange('main'));
     // Clear fetched state when user manually edits the cost field
     document.getElementById('ingredient-cost').addEventListener('input', () => {
-      PriceLookupState.main.fetchedPrice = null;
+      if (!_skipClear.main) PriceLookupState.main.fetchedPrice = null;
     });
 
     document.getElementById('ingredient-form').addEventListener('submit', async e => {
@@ -1548,7 +1570,7 @@
     document.getElementById('qi-fetch-price-btn').addEventListener('click', () => triggerPriceLookup('qi'));
     document.getElementById('qi-unit').addEventListener('change', () => onUnitChange('qi'));
     document.getElementById('qi-cost').addEventListener('input', () => {
-      PriceLookupState.qi.fetchedPrice = null;
+      if (!_skipClear.qi) PriceLookupState.qi.fetchedPrice = null;
     });
 
     // Quick ingredient form submit
