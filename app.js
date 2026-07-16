@@ -232,6 +232,212 @@
     return null; // count ↔ weight/volume — not convertible
   }
 
+  /* ═══════════════════════════════════════════════════════
+     STANDARD BAKING INGREDIENTS — autocomplete + unit defaults
+     Each entry: [displayName, defaultUnit]
+  ═══════════════════════════════════════════════════════ */
+  const STANDARD_INGREDIENTS = [
+    // ── Flours & Starches ──────────────────────────────
+    ['All-purpose flour',     'cup'],
+    ['Bread flour',           'cup'],
+    ['Cake flour',            'cup'],
+    ['Self-rising flour',     'cup'],
+    ['Whole wheat flour',     'cup'],
+    ['Almond flour',          'cup'],
+    ['Coconut flour',         'cup'],
+    ['Oat flour',             'cup'],
+    ['Rice flour',            'cup'],
+    ['Tapioca starch',        'tbsp'],
+    ['Corn starch',           'tbsp'],
+    ['Arrowroot starch',      'tbsp'],
+    ['Potato starch',         'tbsp'],
+    // ── Sugars & Sweeteners ────────────────────────────
+    ['Granulated sugar',      'cup'],
+    ['Brown sugar',           'cup'],
+    ['Powdered sugar',        'cup'],
+    ['Raw cane sugar',        'cup'],
+    ['Coconut sugar',         'cup'],
+    ['Maple syrup',           'tbsp'],
+    ['Honey',                 'tbsp'],
+    ['Molasses',              'tbsp'],
+    ['Agave nectar',          'tbsp'],
+    ['Light corn syrup',      'tbsp'],
+    ['Simple syrup',          'tbsp'],
+    // ── Fats & Oils ────────────────────────────────────
+    ['Unsalted butter',       'cup'],
+    ['Salted butter',         'cup'],
+    ['Vegetable shortening',  'cup'],
+    ['Coconut oil',           'tbsp'],
+    ['Vegetable oil',         'cup'],
+    ['Canola oil',            'cup'],
+    ['Olive oil',             'tbsp'],
+    // ── Dairy ──────────────────────────────────────────
+    ['Whole milk',            'cup'],
+    ['2% milk',               'cup'],
+    ['Skim milk',             'cup'],
+    ['Heavy cream',           'cup'],
+    ['Half and half',         'cup'],
+    ['Buttermilk',            'cup'],
+    ['Sour cream',            'cup'],
+    ['Cream cheese',          'oz'],
+    ['Ricotta cheese',        'cup'],
+    ['Mascarpone',            'cup'],
+    ['Plain yogurt',          'cup'],
+    ['Greek yogurt',          'cup'],
+    ['Sweetened condensed milk', 'fl oz'],
+    ['Evaporated milk',       'fl oz'],
+    // ── Eggs ───────────────────────────────────────────
+    ['Eggs (large)',          'each'],
+    ['Egg whites',            'each'],
+    ['Egg yolks',             'each'],
+    // ── Leaveners ──────────────────────────────────────
+    ['Baking powder',         'tsp'],
+    ['Baking soda',           'tsp'],
+    ['Active dry yeast',      'tsp'],
+    ['Instant yeast',         'tsp'],
+    ['Cream of tartar',       'tsp'],
+    // ── Extracts & Flavorings ──────────────────────────
+    ['Vanilla extract',       'tsp'],
+    ['Almond extract',        'tsp'],
+    ['Peppermint extract',    'tsp'],
+    ['Lemon extract',         'tsp'],
+    ['Orange extract',        'tsp'],
+    ['Coconut extract',       'tsp'],
+    ['Rose water',            'tsp'],
+    ['Espresso powder',       'tsp'],
+    // ── Salt & Spices ──────────────────────────────────
+    ['Salt',                  'tsp'],
+    ['Kosher salt',           'tsp'],
+    ['Cinnamon',              'tsp'],
+    ['Nutmeg',                'tsp'],
+    ['Cardamom',              'tsp'],
+    ['Ground ginger',         'tsp'],
+    ['Cloves',                'tsp'],
+    ['Allspice',              'tsp'],
+    ['Turmeric',              'tsp'],
+    ['Matcha powder',         'tsp'],
+    // ── Chocolate & Cocoa ──────────────────────────────
+    ['Cocoa powder',          'tbsp'],
+    ['Dutch-process cocoa',   'tbsp'],
+    ['Dark chocolate chips',  'cup'],
+    ['Semi-sweet chocolate chips', 'cup'],
+    ['Milk chocolate chips',  'cup'],
+    ['White chocolate chips', 'cup'],
+    ['Bittersweet chocolate bar', 'oz'],
+    ['Dark chocolate bar',    'oz'],
+    ['White chocolate bar',   'oz'],
+    // ── Nuts & Seeds ───────────────────────────────────
+    ['Chopped walnuts',       'cup'],
+    ['Chopped pecans',        'cup'],
+    ['Sliced almonds',        'cup'],
+    ['Whole peanuts',         'cup'],
+    ['Hazelnuts',             'cup'],
+    ['Macadamia nuts',        'cup'],
+    ['Pistachios',            'cup'],
+    ['Sesame seeds',          'tbsp'],
+    ['Poppy seeds',           'tbsp'],
+    ['Chia seeds',            'tbsp'],
+    ['Flax seeds',            'tbsp'],
+    ['Pumpkin seeds',         'cup'],
+    ['Sunflower seeds',       'cup'],
+    // ── Dried Fruit ────────────────────────────────────
+    ['Raisins',               'cup'],
+    ['Dried cranberries',     'cup'],
+    ['Dried cherries',        'cup'],
+    ['Dried blueberries',     'cup'],
+    ['Maraschino cherries',   'each'],
+    // ── Fresh Fruit & Citrus ───────────────────────────
+    ['Lemon zest',            'tsp'],
+    ['Orange zest',           'tsp'],
+    ['Lemon juice',           'tbsp'],
+    ['Orange juice',          'cup'],
+    ['Lime juice',            'tbsp'],
+    ['Banana (mashed)',       'cup'],
+    ['Applesauce',            'cup'],
+    ['Pumpkin puree',         'cup'],
+    // ── Spreads & Fillings ─────────────────────────────
+    ['Peanut butter',         'tbsp'],
+    ['Almond butter',         'tbsp'],
+    ['Nutella',               'tbsp'],
+    ['Strawberry jam',        'tbsp'],
+    ['Raspberry jam',         'tbsp'],
+    ['Apricot jam',           'tbsp'],
+    ['Caramel sauce',         'tbsp'],
+    ['Lemon curd',            'tbsp'],
+    ['Dulce de leche',        'tbsp'],
+    // ── Toppings & Decorations ─────────────────────────
+    ['Sprinkles',             'tbsp'],
+    ['Nonpareils',            'tbsp'],
+    ['Pearl sugar',           'tbsp'],
+    ['Sanding sugar',         'tbsp'],
+    ['Edible glitter',        'each'],
+    ['Food coloring (gel)',   'each'],
+    // ── Specialty ──────────────────────────────────────
+    ['Marzipan',              'oz'],
+    ['Fondant',               'oz'],
+    ['Gum paste',             'oz'],
+    ['Gelatin (packet)',      'each'],
+    ['Instant pudding mix',   'oz'],
+    ['Cream cheese frosting', 'oz'],
+    // ── Packaging & Supplies ───────────────────────────
+    ['Cupcake liner',         'each'],
+    ['Cake box',              'each'],
+    ['Cake board',            'each'],
+    ['Piping bag',            'each'],
+    ['Parchment paper',       'each'],
+    ['Cellophane bag',        'each'],
+    ['Sticker / label',       'each'],
+    ['Ribbon',                'each'],
+  ];
+
+  /** Build a map from lowercased name → defaultUnit for fast lookup */
+  const _stdIngredientMap = new Map(
+    STANDARD_INGREDIENTS.map(([name, unit]) => [name.toLowerCase(), unit])
+  );
+
+  /**
+   * Inject a shared <datalist> into the document and wire it up to
+   * the given input element.  Returns the datalist id.
+   */
+  function attachIngredientDatalist(inputEl) {
+    const listId = 'std-ingredient-datalist';
+    if (!document.getElementById(listId)) {
+      const dl = document.createElement('datalist');
+      dl.id = listId;
+      STANDARD_INGREDIENTS.forEach(([name]) => {
+        const opt = document.createElement('option');
+        opt.value = name;
+        dl.appendChild(opt);
+      });
+      document.body.appendChild(dl);
+    }
+    inputEl.setAttribute('list', listId);
+    inputEl.setAttribute('autocomplete', 'off');
+  }
+
+  /**
+   * When an ingredient name field changes, check if the value matches a
+   * standard ingredient and, if so, auto-set the unit selector and
+   * trigger a price lookup.
+   * @param {'main'|'qi'} which
+   */
+  function onIngredientNameChange(which) {
+    const nameEl = document.getElementById(which === 'main' ? 'ingredient-name' : 'qi-name');
+    const unitEl = document.getElementById(which === 'main' ? 'ingredient-unit' : 'qi-unit');
+
+    const val  = nameEl.value.trim();
+    const unit = _stdIngredientMap.get(val.toLowerCase());
+    if (!unit) return; // not a known standard ingredient — leave unit alone
+
+    // Auto-set unit if it changed
+    if (unitEl.value !== unit) {
+      unitEl.value = unit;
+    }
+
+    // Auto-trigger price lookup so all three fields populate at once
+    triggerPriceLookup(which);
+  }
+
   /**
    * Look up average market price for an ingredient at a given unit.
    * Tries Spoonacular API first (if key provided), falls back to local table.
@@ -1071,6 +1277,10 @@
     document.getElementById('add-ingredient-empty-btn').addEventListener('click', () => openIngredientModal());
     document.getElementById('ingredient-search').addEventListener('input', renderIngredients);
 
+    // Autocomplete datalist on the name field
+    attachIngredientDatalist(document.getElementById('ingredient-name'));
+    document.getElementById('ingredient-name').addEventListener('change', () => onIngredientNameChange('main'));
+
     // Price lookup buttons
     document.getElementById('fetch-price-btn').addEventListener('click', () => triggerPriceLookup('main'));
     document.getElementById('ingredient-unit').addEventListener('change', () => onUnitChange('main'));
@@ -1599,6 +1809,10 @@
       if (s) { s.textContent = ''; s.className = 'price-lookup-status'; }
       document.getElementById('qi-name').focus();
     });
+
+    // Autocomplete datalist on the quick-add name field
+    attachIngredientDatalist(document.getElementById('qi-name'));
+    document.getElementById('qi-name').addEventListener('change', () => onIngredientNameChange('qi'));
 
     // Quick-add price lookup
     document.getElementById('qi-fetch-price-btn').addEventListener('click', () => triggerPriceLookup('qi'));
