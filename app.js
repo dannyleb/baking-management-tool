@@ -1313,8 +1313,11 @@
       document.getElementById('ingredient-modal-overlay').classList.add('hidden');
       renderIngredients();
 
-      // Also refresh recipe builder library if open
-      if (State.currentView === 'recipe-builder') renderIngredientLibrary();
+      // Refresh suggestions if recipe builder is open
+      if (State.currentView === 'recipe-builder') {
+        const q = document.getElementById('recipe-ingredient-search')?.value;
+        if (q) renderIngredientSuggestions(q);
+      }
     });
 
     // Table action buttons (delegated)
@@ -1556,8 +1559,9 @@
       titleEl.textContent = 'New Recipe';
     }
 
-    // Render ingredient library
-    renderIngredientLibrary();
+    // Show empty state if no ingredients yet
+    const emptyEl = document.getElementById('recipe-ingredients-empty');
+    if (emptyEl) emptyEl.classList.toggle('hidden', State.recipeDraft.ingredients.length > 0);
 
     // Update pricing preview
     updatePricingPreview();
@@ -1566,31 +1570,103 @@
     updateTimePerItem();
   }
 
-  function renderIngredientLibrary(search) {
-    const pid = State.profileId;
-    const ingredients = DB.getIngredients(pid);
-    const q = (search || document.getElementById('library-search').value || '').toLowerCase();
-    const filtered = ingredients.filter(i => i.name.toLowerCase().includes(q));
-    const chips = document.getElementById('ingredient-chips');
+  /** No longer renders a library panel — kept as no-op to avoid breaking call sites */
+  function renderIngredientLibrary() {}
 
-    if (ingredients.length === 0) {
-      chips.innerHTML = '<p class="hint-text" style="padding:0.5rem;">No ingredients yet. Add one with the + button.</p>';
+  /**
+   * Render the suggestion dropdown for the recipe ingredient search.
+   * Shows saved library matches first, then standard-list matches.
+   */
+  function renderIngredientSuggestions(query) {
+    const suggestionsEl = document.getElementById('recipe-ingredient-suggestions');
+    if (!suggestionsEl) return;
+    const q = query.trim().toLowerCase();
+
+    if (!q) {
+      suggestionsEl.classList.add('hidden');
       return;
     }
 
-    const addedIds = State.recipeDraft.ingredients.map(ri => ri.ingredientId);
-    chips.innerHTML = filtered.map(ing => `
-      <div class="ingredient-chip ${addedIds.includes(ing.id) ? 'already-added' : ''}"
-           draggable="true"
-           data-id="${ing.id}"
-           data-name="${esc(ing.name)}"
-           data-unit="${esc(ing.defaultUnit)}">
-        <span>${esc(ing.name)}</span>
-        <span class="chip-unit">${esc(ing.defaultUnit)}</span>
-      </div>
-    `).join('');
+    const saved      = DB.getIngredients(State.profileId);
+    const addedIds   = new Set(State.recipeDraft.ingredients.map(r => r.ingredientId));
+    const savedNames = new Set(saved.map(i => i.name.toLowerCase()));
 
-    initDragAndDrop();
+    // Saved library matches
+    const savedMatches = saved
+      .filter(i => i.name.toLowerCase().includes(q))
+      .map(i => ({ id: i.id, name: i.name, unit: i.defaultUnit, fromLibrary: true, alreadyAdded: addedIds.has(i.id) }));
+
+    // Standard ingredient matches not already in library
+    const stdMatches = STANDARD_INGREDIENTS
+      .filter(([name]) => name.toLowerCase().includes(q) && !savedNames.has(name.toLowerCase()))
+      .slice(0, 8)
+      .map(([name, unit]) => ({ id: null, name, unit, fromLibrary: false, alreadyAdded: false }));
+
+    const all = [...savedMatches, ...stdMatches].slice(0, 10);
+
+    if (!all.length) {
+      suggestionsEl.innerHTML = `
+        <div class="suggestion-empty">
+          No match found —
+          <button type="button" class="suggestion-custom-btn" data-custom-name="${esc(query)}">
+            Add "${esc(query)}" as custom ingredient
+          </button>
+        </div>`;
+    } else {
+      suggestionsEl.innerHTML = all.map(m => `
+        <div class="suggestion-item${m.alreadyAdded ? ' suggestion-added' : ''}"
+             role="option"
+             data-name="${esc(m.name)}"
+             data-unit="${esc(m.unit)}"
+             data-id="${m.id || ''}">
+          <span class="suggestion-name">${esc(m.name)}</span>
+          <span class="suggestion-unit">${esc(m.unit)}</span>
+          ${m.alreadyAdded
+            ? '<span class="suggestion-tag tag-added">Added</span>'
+            : m.fromLibrary
+              ? '<span class="suggestion-tag tag-saved">Saved</span>'
+              : ''}
+        </div>
+      `).join('');
+    }
+
+    suggestionsEl.classList.remove('hidden');
+  }
+
+  /**
+   * Ensure an ingredient exists in the library.
+   * If not saved yet, auto-creates it with a price from the local table.
+   * Returns the ingredient object.
+   */
+  function ensureIngredientInLibrary(name, unit) {
+    const ingredients = DB.getIngredients(State.profileId);
+    const existing = ingredients.find(i => i.name.toLowerCase() === name.toLowerCase());
+    if (existing) return existing;
+
+    // Lookup price from local table (fast, no network request)
+    const priceKey = findPriceEntry(name);
+    let cost = 0;
+    if (priceKey) {
+      const entry     = BAKING_PRICES[priceKey];
+      const converted = convertPrice(entry.price, entry.unit, unit, name);
+      cost = converted !== null ? converted : entry.price;
+    }
+
+    const newIng = { id: uuid(), name, defaultUnit: unit, costPerUnit: cost, createdAt: new Date().toISOString() };
+    ingredients.push(newIng);
+    DB.saveIngredients(State.profileId, ingredients);
+    return newIng;
+  }
+
+  /**
+   * Add an ingredient to the recipe by name + unit.
+   * Auto-saves to library if needed.
+   */
+  function addIngredientToRecipeByName(name, unit) {
+    const ing = ensureIngredientInLibrary(name, unit);
+    // Only add if not already in recipe
+    if (State.recipeDraft.ingredients.find(r => r.ingredientId === ing.id)) return;
+    addRecipeIngredientRow({ ingredientId: ing.id, name: ing.name, unit: ing.defaultUnit, amount: 1 });
   }
 
   function addRecipeIngredientRow(ri) {
@@ -1635,7 +1711,9 @@
     });
 
     listEl.appendChild(row);
-    renderIngredientLibrary();
+
+    // Show/hide empty state
+    document.getElementById('recipe-ingredients-empty').classList.add('hidden');
     updatePricingPreview();
   }
 
@@ -1651,7 +1729,6 @@
     if (State.recipeDraft.ingredients.length === 0) {
       document.getElementById('recipe-ingredients-empty').classList.remove('hidden');
     }
-    renderIngredientLibrary();
     updatePricingPreview();
   }
 
@@ -1793,48 +1870,57 @@
     document.getElementById('save-recipe-footer-btn').addEventListener('click', saveRecipe);
     document.getElementById('save-recipe-cancel').addEventListener('click', () => showView('recipes'));
 
-    // Library search
-    document.getElementById('library-search').addEventListener('input', e => {
-      renderIngredientLibrary(e.target.value);
+    // Ingredient search — show suggestions as user types
+    const recipeSearchEl = document.getElementById('recipe-ingredient-search');
+    const suggestionsEl  = document.getElementById('recipe-ingredient-suggestions');
+
+    recipeSearchEl.addEventListener('input', e => {
+      renderIngredientSuggestions(e.target.value);
     });
 
-    // Quick add ingredient button
-    document.getElementById('quick-add-ingredient-btn').addEventListener('click', () => {
-      document.getElementById('quick-ingredient-modal-overlay').classList.remove('hidden');
-      // Reset qi price lookup state
-      PriceLookupState.qi = { fetchedPrice: null, fetchedUnit: null, fetchedName: null };
-      const b = document.getElementById('qi-price-source-badge');
-      const s = document.getElementById('qi-price-lookup-status');
-      if (b) b.classList.add('hidden');
-      if (s) { s.textContent = ''; s.className = 'price-lookup-status'; }
-      document.getElementById('qi-name').focus();
+    // Dismiss suggestions on outside click
+    document.addEventListener('click', e => {
+      if (!e.target.closest('.ingredient-search-wrap')) {
+        suggestionsEl.classList.add('hidden');
+      }
     });
 
-    // Autocomplete datalist on the quick-add name field
-    attachIngredientDatalist(document.getElementById('qi-name'));
-    document.getElementById('qi-name').addEventListener('change', () => onIngredientNameChange('qi'));
-
-    // Quick-add price lookup
-    document.getElementById('qi-fetch-price-btn').addEventListener('click', () => triggerPriceLookup('qi'));
-    document.getElementById('qi-unit').addEventListener('change', () => onUnitChange('qi'));
-    document.getElementById('qi-cost').addEventListener('input', () => {
-      if (!_skipClear.qi) PriceLookupState.qi.fetchedPrice = null;
+    // Suggestion click (delegated)
+    suggestionsEl.addEventListener('click', e => {
+      // "Add as custom" button
+      const customBtn = e.target.closest('.suggestion-custom-btn');
+      if (customBtn) {
+        const name = customBtn.dataset.customName;
+        addIngredientToRecipeByName(name, 'each');
+        recipeSearchEl.value = '';
+        suggestionsEl.classList.add('hidden');
+        return;
+      }
+      // Regular suggestion row
+      const item = e.target.closest('.suggestion-item');
+      if (!item) return;
+      const name = item.dataset.name;
+      const unit = item.dataset.unit;
+      addIngredientToRecipeByName(name, unit);
+      recipeSearchEl.value = '';
+      suggestionsEl.classList.add('hidden');
     });
 
-    // Quick ingredient form submit
-    document.getElementById('quick-ingredient-form').addEventListener('submit', async e => {
-      e.preventDefault();
-      const name = document.getElementById('qi-name').value.trim();
-      const unit = document.getElementById('qi-unit').value;
-      const cost = parseFloat(document.getElementById('qi-cost').value) || 0;
-      if (!name) return;
-      const ingredients = DB.getIngredients(State.profileId);
-      ingredients.push({ id: uuid(), name, defaultUnit: unit, costPerUnit: cost, createdAt: new Date().toISOString() });
-      DB.saveIngredients(State.profileId, ingredients);
-      document.getElementById('quick-ingredient-modal-overlay').classList.add('hidden');
-      document.getElementById('quick-ingredient-form').reset();
-      showToast('Ingredient added to library!', 'success');
-      renderIngredientLibrary();
+    // Keyboard: Enter on search adds first suggestion, Escape closes
+    recipeSearchEl.addEventListener('keydown', e => {
+      if (e.key === 'Escape') {
+        suggestionsEl.classList.add('hidden');
+        return;
+      }
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        const first = suggestionsEl.querySelector('.suggestion-item:not(.suggestion-added)');
+        if (first) {
+          addIngredientToRecipeByName(first.dataset.name, first.dataset.unit);
+          recipeSearchEl.value = '';
+          suggestionsEl.classList.add('hidden');
+        }
+      }
     });
 
     // Time spinners

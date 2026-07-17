@@ -556,38 +556,27 @@
             <!-- Section 3: Ingredients -->
             <div class="builder-section">
               <h2 class="builder-section-title">Ingredients</h2>
-              <div class="ingredient-builder-layout">
 
-                <!-- LEFT: Library panel -->
-                <div class="ingredient-library-panel">
-                  <div class="panel-header">
-                    <h3>Ingredient Library</h3>
-                    <button class="btn-icon-sm" id="quick-add-ingredient-btn" title="Add new ingredient">
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-                    </button>
-                  </div>
-                  <input type="text" id="library-search" placeholder="Filter ingredients…" class="panel-search" />
-                  <div id="ingredient-chips" class="ingredient-chips">
-                    <!-- Populated dynamically -->
-                  </div>
-                  <p class="hint-text">Drag to recipe or double-click to add</p>
+              <!-- Search + suggestions -->
+              <div class="ingredient-search-wrap">
+                <div class="ingredient-search-bar">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" class="search-icon"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                  <input type="text" id="recipe-ingredient-search"
+                         placeholder="Search ingredients to add…"
+                         autocomplete="off" autocorrect="off" spellcheck="false" />
                 </div>
+                <div id="recipe-ingredient-suggestions" class="ingredient-suggestions hidden" role="listbox">
+                  <!-- Populated dynamically -->
+                </div>
+              </div>
 
-                <!-- RIGHT: Recipe ingredients drop zone -->
-                <div class="recipe-ingredients-panel">
-                  <div class="panel-header">
-                    <h3>Recipe Ingredients</h3>
-                  </div>
-                  <div id="recipe-drop-zone" class="recipe-drop-zone">
-                    <div id="recipe-ingredients-empty" class="drop-empty-state">
-                      <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
-                      <p>Drag ingredients here<br/>or double-click from library</p>
-                    </div>
-                    <div id="recipe-ingredients-list" class="recipe-ingredients-list">
-                      <!-- Populated dynamically -->
-                    </div>
-                  </div>
-                </div>
+              <!-- Added ingredients list -->
+              <div id="recipe-ingredients-empty" class="recipe-ing-empty hidden">
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+                <p>Search above and tap an ingredient to add it to this recipe</p>
+              </div>
+              <div id="recipe-ingredients-list" class="recipe-ingredients-list">
+                <!-- Populated dynamically -->
               </div>
             </div>
 

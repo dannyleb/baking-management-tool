@@ -1149,7 +1149,137 @@ select.input-error {
   background: var(--accent-light);
 }
 
-/* Ingredient builder layout */
+/* ── Ingredient search-and-add (recipe builder) ─────────── */
+.ingredient-search-wrap {
+  position: relative;
+  margin-bottom: 0.75rem;
+}
+
+.ingredient-search-bar {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius);
+  padding: 0 0.85rem;
+  background: var(--surface);
+  transition: border-color var(--transition), box-shadow var(--transition);
+}
+
+.ingredient-search-bar:focus-within {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(181,105,42,0.12);
+}
+
+.ingredient-search-bar .search-icon {
+  color: var(--text-3);
+  flex-shrink: 0;
+}
+
+.ingredient-search-bar input {
+  flex: 1;
+  border: none;
+  background: transparent;
+  padding: 0.7rem 0;
+  font-size: 0.92rem;
+  color: var(--text);
+  outline: none;
+  min-width: 0;
+}
+
+.ingredient-search-bar input::placeholder { color: var(--text-3); }
+
+/* Suggestions dropdown */
+.ingredient-suggestions {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  background: var(--surface);
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-md);
+  z-index: 50;
+  overflow: hidden;
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.suggestion-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.65rem 0.9rem;
+  cursor: pointer;
+  transition: background var(--transition);
+  border-bottom: 1px solid var(--border);
+}
+
+.suggestion-item:last-child { border-bottom: none; }
+
+.suggestion-item:hover { background: var(--surface-2); }
+
+.suggestion-item.suggestion-added {
+  opacity: 0.5;
+  cursor: default;
+  pointer-events: none;
+}
+
+.suggestion-name {
+  flex: 1;
+  font-size: 0.88rem;
+  color: var(--text);
+}
+
+.suggestion-unit {
+  font-size: 0.78rem;
+  color: var(--text-3);
+}
+
+.suggestion-tag {
+  font-size: 0.68rem;
+  font-weight: 600;
+  padding: 0.1em 0.5em;
+  border-radius: var(--radius-full);
+  letter-spacing: 0.03em;
+}
+
+.tag-saved  { background: var(--blue-light);   color: var(--blue); }
+.tag-added  { background: var(--green-light);  color: var(--green); }
+
+.suggestion-empty {
+  padding: 0.75rem 0.9rem;
+  font-size: 0.84rem;
+  color: var(--text-2);
+}
+
+.suggestion-custom-btn {
+  background: none;
+  border: none;
+  color: var(--accent);
+  cursor: pointer;
+  font-size: 0.84rem;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  padding: 0;
+}
+
+/* Empty state (no ingredients added yet) */
+.recipe-ing-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 2.5rem 1rem;
+  color: var(--text-3);
+  text-align: center;
+  font-size: 0.85rem;
+  border: 2px dashed var(--border);
+  border-radius: var(--radius);
+  margin-bottom: 0.5rem;
+}
+
+/* Ingredient builder layout (kept for backward compat, no longer used) */
 .ingredient-builder-layout {
   display: grid;
   grid-template-columns: 240px 1fr;
